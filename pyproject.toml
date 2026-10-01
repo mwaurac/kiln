@@ -1,0 +1,57 @@
+[project]
+name = "kiln-rt"
+version = "0.1.0"
+description = "Kiln"
+readme = "README.md"
+license = { text = "GPL-2.0" }
+authors = [
+    { name = "Collins Mwaura", email = "forgot.my@gmail.com" }
+]
+keywords = [ "tensor", "deep-learning" ]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+kiln = "kiln:main"
+
+[project.urls]
+Homepage = "https://github.com/mwaurac/kiln"
+Repository = "https://github.com/mwaurac/kiln"
+Issues = "https://github.com/mwaurac/kiln/issues"
+
+[project.optional-dependencies]
+
+[build-system]
+requires = ["scikit-build-core>=1.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build.cmake]
+build-type = "Release"
+
+[tool.scikit-build.cmake.define]
+KILN_BUILD_TESTS = "OFF"
+KILN_BUILD_PYTHON = "ON"
+
+[tool.scikit-build.wheel]
+packages = ["kiln"]
+
+[tool.scikit-build.sdist]
+include = [
+    "CMakeLists.txt",
+    "cmake/*",
+    "csrc/**",
+    "kiln/**",
+    "LICENSE",
+    "README.md",
+]
+
+[tool.pytest.ini_options]
+
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
+skip = ["pp*", "*-musllinux*", "*-win32", "cp310-macosx_universal2"]
+archs = "auto"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
+manylinux-x86_64-image = "manylinux_2_28"
