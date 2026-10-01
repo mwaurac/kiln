@@ -1,0 +1,56 @@
+BasedOnStyle: Google
+
+Language: Cpp
+Standard: c++20
+ColumnLimit: 100
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+NamespaceIndentation: None
+IndentCaseLabels: true
+IndentCaseBlocks: false
+
+PointerAlignment: Right
+ReferenceAlignment: Right
+DerivePointerAlignment: false
+
+SortIncludes: true
+IncludeBlocks: Regroup
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+SpaceBeforeParens: ControlStatements
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: DontAlign
+
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+SpaceBeforeAssignmentOperators: true
+CompactNamespaces: false
+ReflowComments: false
