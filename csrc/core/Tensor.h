@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace kiln {
@@ -12,6 +13,11 @@ class Tensor {
   Tensor(Shape &shape, DType dtype, Device device)
       : impl_(std::make_shared<TensorImpl>(shape, dtype, device)) {}
   Tensor() = delete;
+
+  Tensor(const Tensor &) = default;
+  Tensor &operator=(const Tensor &) = default;
+  Tensor(Tensor &&) noexcept = default;
+  Tensor &operator=(Tensor &&) noexcept = default;
 
   Shape shape() const;
   Strides strides() const;
@@ -26,6 +32,8 @@ class Tensor {
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;
   Tensor transpose() const;
+
+  std::string print_tensor() const;
 
  private:
   std::shared_ptr<TensorImpl> impl_;

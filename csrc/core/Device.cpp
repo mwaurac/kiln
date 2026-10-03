@@ -1,10 +1,11 @@
 #include <core/Device.h>
 
 #include <stdexcept>
+#include <string>
 
 namespace kiln {
 
-const char *device_name(Device d) {
+const std::string device_name(Device d) {
   switch (d) {
     case Device::CPU:
       return "cpu";

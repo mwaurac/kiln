@@ -49,6 +49,15 @@ PYBIND11_MODULE(_kiln, m) {
       py::arg("device") = kiln::Device::CPU);
 
   py::class_<kiln::Tensor>(m, "Tensor")
+      .def(py::init([](std::vector<uint64_t> shape, kiln::DType dtype, kiln::Device device) {
+        return kiln::Tensor::empty(shape);  // TODO: pass data like torch.Tensor()
+      }),
+          py::arg("shape"),
+          py::arg("dtype") = kiln::DType::F32,
+          py::arg("device") = kiln::Device::CPU)
+
+      .def("__repr__", &kiln::Tensor::print_tensor)
+
       .def_property_readonly("shape", &kiln::Tensor::shape)
       .def_property_readonly("strides", &kiln::Tensor::strides)
       .def_property_readonly("dtype", &kiln::Tensor::dtype)

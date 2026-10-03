@@ -11,7 +11,6 @@ def test_version():
 
 def test_zero_factory():
     t = kiln.zeros([2, 3])
-    print(t)
     assert t.shape == [2, 3]
     assert t.numel() == 6
     assert t.dtype == DType.F32

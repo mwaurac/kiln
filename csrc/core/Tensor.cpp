@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <vector>
 
 namespace kiln {
@@ -70,5 +71,18 @@ Tensor Tensor::reshape(const std::vector<int64_t> &dims) const {}
 Tensor Tensor::view(const std::vector<int64_t> &dims) const {}
 
 Tensor Tensor::transpose() const {}
+
+std::string Tensor::print_tensor() const {
+  std::string s = "kiln.Tensor(shape=[";
+
+  for (size_t i = 0; i < shape().size(); ++i) {
+    s += std::to_string(shape()[i]);
+    if (i + 1 < shape().size()) {
+      s += ", ";
+    }
+  }
+  s += std::string("], dtype=") + dtype_name(dtype()) + ", device=" + device_name(device()) + ")";
+  return s;
+}
 
 }  // namespace kiln

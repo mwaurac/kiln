@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace kiln {
 
@@ -24,5 +25,7 @@ struct DTypeInfo {
   size_t bytes_per_block;
   bool is_quantized;
 };
+
 std::size_t dtype_size(DType dtype);
+std::string dtype_name(DType dtype);
 }  // namespace kiln

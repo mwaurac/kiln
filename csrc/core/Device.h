@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace kiln {
 enum class Device : uint8_t {
@@ -8,4 +9,5 @@ enum class Device : uint8_t {
   CUDA = 1,
 };
 
-}
+const std::string device_name(Device device);
+}  // namespace kiln

@@ -1,6 +1,7 @@
 #include <core/Dtype.h>
 
 #include <cstddef>
+#include <string>
 
 namespace kiln {
 
@@ -35,4 +36,7 @@ std::size_t dtype_size(DType dtype) {
   return type_info[dtype].bytes_per_block;
 }
 
+std::string dtype_name(DType dtype) {
+  return type_info[dtype].name;
+}
 }  // namespace kiln
