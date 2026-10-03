@@ -70,7 +70,7 @@ std::size_t Buffer::size() const {
   return size_;
 }
 
-const void *Buffer::base() const {
+void *Buffer::base() const {
   return ptr_;
 }
 

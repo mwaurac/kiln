@@ -16,13 +16,16 @@ class Storage {
   Storage &operator=(const Storage &) = delete;
   ~Storage() = default;
 
-  std::size_t nbytes(std::size_t numel) const;
+  std::size_t nbytes() const;
   const void *data() const;
+  void *data();
 
   Device device() const;
+  DType dtype() const;
 
  private:
   std::shared_ptr<Buffer> buf_;
+  std::size_t numel_;
   DType dtype_;
 };
 }  // namespace kiln

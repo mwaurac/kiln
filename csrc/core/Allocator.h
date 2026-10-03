@@ -14,7 +14,7 @@ class Buffer {
   Buffer &operator=(const Buffer &) = delete;
 
   std::size_t size() const;
-  const void *base() const;
+  void *base() const;
   Device device() const;
 
  private:

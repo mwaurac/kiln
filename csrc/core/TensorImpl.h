@@ -24,6 +24,8 @@ class TensorImpl {
   Strides strides_;
   Shape shape_;
 
+  void compute_strides();
+
  public:
   TensorImpl(Shape &shape, DType dtype, Device device = Device::CPU);
   TensorImpl(std::shared_ptr<Storage> storage,
@@ -32,5 +34,11 @@ class TensorImpl {
       std::size_t offset);
 
   const std::shared_ptr<Storage> &storage() const;
+  const std::int64_t offset() const;
+  DType dtype() const;
+  Device device() const;
+  const Shape shape() const;
+  const Strides strides() const;
+  const std::size_t numel() const;
 };
 }  // namespace kiln
