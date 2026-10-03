@@ -1,7 +1,8 @@
+#include <core/Device.h>
 #include <core/Dtype.h>
+#include <core/Tensor.h>
 #include <pybind11/pybind11.h>
-
-#include "core/Device.h"
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
@@ -24,4 +25,38 @@ PYBIND11_MODULE(_kiln, m) {
       .value("CPU", kiln::Device::CPU)
       .value("CUDA", kiln::Device::CUDA)
       .export_values();
+
+  m.attr("float32") = kiln::DType::F32;
+  m.attr("f16") = kiln::DType::F16;
+  m.attr("bf16") = kiln::DType::BF16;
+  m.attr("q8_0") = kiln::DType::Q8_0;
+
+  m.def("empty",
+      &kiln::Tensor::empty,
+      py::arg("shape"),
+      py::arg("dtype") = kiln::DType::F32,
+      py::arg("device") = kiln::Device::CPU);
+
+  m.def("zeros",
+      &kiln::Tensor::zeros,
+      py::arg("shape"),
+      py::arg("dtype") = kiln::DType::F32,
+      py::arg("device") = kiln::Device::CPU);
+  m.def("ones",
+      &kiln::Tensor::ones,
+      py::arg("shape"),
+      py::arg("dtype") = kiln::DType::F32,
+      py::arg("device") = kiln::Device::CPU);
+
+  py::class_<kiln::Tensor>(m, "Tensor")
+      .def_property_readonly("shape", &kiln::Tensor::shape)
+      .def_property_readonly("strides", &kiln::Tensor::strides)
+      .def_property_readonly("dtype", &kiln::Tensor::dtype)
+      .def_property_readonly("device", &kiln::Tensor::device)
+
+      .def("numel", &kiln::Tensor::numel)
+
+      .def("reshape", &kiln::Tensor::reshape, py::arg("dims"))
+      .def("view", &kiln::Tensor::view, py::arg("dims"))
+      .def("transpose", &kiln::Tensor::transpose);
 }

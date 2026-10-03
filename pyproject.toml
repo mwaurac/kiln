@@ -9,7 +9,9 @@ authors = [
 ]
 keywords = [ "tensor", "deep-learning" ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pytest>=9.1.1",
+]
 
 [project.scripts]
 kiln = "kiln:main"
