@@ -30,8 +30,8 @@ class TensorImpl {
   TensorImpl(Shape &shape, DType dtype, Device device = Device::CPU);
   TensorImpl(std::shared_ptr<Storage> storage,
       const Shape &shape,
-      Strides strides,
-      std::size_t offset);
+      const Strides &strides,
+      std::int64_t offset);
 
   const std::shared_ptr<Storage> &storage() const;
   const std::int64_t offset() const;
@@ -40,5 +40,10 @@ class TensorImpl {
   const Shape shape() const;
   const Strides strides() const;
   const std::size_t numel() const;
+  bool is_contiguous() const;
+
+  TensorImpl view(const std::vector<int64_t> &dims) const;
+  TensorImpl reshape(const std::vector<int64_t> &dims) const;
+  TensorImpl transpose() const;
 };
 }  // namespace kiln

@@ -36,6 +36,7 @@ class Tensor {
   std::string print_tensor() const;
 
  private:
+  explicit Tensor(std::shared_ptr<TensorImpl> impl) : impl_(std::move(impl)) {}
   std::shared_ptr<TensorImpl> impl_;
 };
 }  // namespace kiln

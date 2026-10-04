@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -68,23 +69,16 @@ Tensor Tensor::ones(Shape &shape, DType dtype, Device device) {
   return t;
 }
 
-Tensor Tensor::reshape(const std::vector<int64_t> &dims) const {}
+Tensor Tensor::reshape(const std::vector<int64_t> &dims) const {
+  return Tensor(std::make_shared<TensorImpl>(impl_->reshape(dims)));
+}
 
-Tensor Tensor::view(const std::vector<int64_t> &dims) const {}
+Tensor Tensor::view(const std::vector<int64_t> &dims) const {
+  return Tensor(std::make_shared<TensorImpl>(impl_->view(dims)));
+}
 
 Tensor Tensor::transpose() const {
-  const Shape src_shape = shape();
-  const Strides src_strides = strides();
-  const std::size_t rank = src_shape.size();
-  Shape new_shape(rank);
-  Strides new_strides(rank);
-  for (std::size_t i = 0; i < rank; ++i) {
-    new_shape[i] = src_shape[rank - 1 - i];
-    new_strides[i] = src_strides[rank - 1 - i];
-  }
-  auto new_impl =
-      std::make_shared<TensorImpl>(impl_->storage(), new_shape, new_strides, impl_->offset());
-  return Tensor(std::move(new_impl));
+  return Tensor(std::make_shared<TensorImpl>(impl_->transpose()));
 }
 
 std::string Tensor::print_tensor() const {
