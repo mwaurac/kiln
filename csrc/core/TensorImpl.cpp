@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -156,9 +157,52 @@ TensorImpl TensorImpl::view(const std::vector<int64_t> &dims) const {
   return TensorImpl(storage(), new_shape, new_strides, offset());
 }
 
+TensorImpl copy_contiguous(const TensorImpl &src) {
+  Shape shape = src.shape();
+  TensorImpl out(shape, src.dtype(), src.device());
+
+  const size_t esize = dtype_size(src.dtype());
+  const size_t n = src.numel();
+  auto *dst = static_cast<char *>(out.storage()->data());
+  auto *base =
+      static_cast<const char *>(src.storage()->data()) + static_cast<size_t>(src.offset()) * esize;
+
+  if (n == 0) {
+    return out;
+  }
+
+  if (src.is_contiguous()) {
+    std::memcpy(dst, base, n * esize);
+    return out;
+  }
+
+  const Strides strides = src.strides();
+  const size_t rank = shape.size();
+  std::vector<size_t> idx(rank, 0);
+
+  size_t src_elem = 0;
+
+  for (size_t i = 0; i < n; ++i) {
+    std::memcpy(dst + i * esize, base + src_elem * esize, esize);
+
+    for (size_t dd = rank; dd-- > 0;) {
+      src_elem += strides[dd];
+      if (++idx[dd] < shape[dd]) {
+        break;
+      }
+      src_elem -= strides[dd] * shape[dd];
+      idx[dd] = 0;
+    }
+  }
+  return out;
+}
+
 TensorImpl TensorImpl::reshape(const std::vector<int64_t> &dims) const {
-  (void)dims;
-  throw std::runtime_error("reshape: unimplemented");
+  if (is_contiguous()) {
+    return view(dims);
+  }
+
+  return contiguous().view(dims);
 }
 
 TensorImpl TensorImpl::transpose() const {
@@ -173,5 +217,11 @@ TensorImpl TensorImpl::transpose() const {
   }
 
   return TensorImpl(storage(), new_shape, new_strides, offset());
+}
+
+TensorImpl TensorImpl::contiguous() const {
+  if (is_contiguous())
+    return *this;
+  return copy_contiguous(*this);
 }
 }  // namespace kiln

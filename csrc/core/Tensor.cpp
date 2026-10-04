@@ -81,6 +81,10 @@ Tensor Tensor::transpose() const {
   return Tensor(std::make_shared<TensorImpl>(impl_->transpose()));
 }
 
+Tensor Tensor::contiguous() const {
+  return Tensor(std::make_shared<TensorImpl>(impl_->contiguous()));
+}
+
 std::string Tensor::print_tensor() const {
   std::string s = "kiln.Tensor(shape=[";
 

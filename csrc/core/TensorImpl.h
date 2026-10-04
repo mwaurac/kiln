@@ -45,5 +45,6 @@ class TensorImpl {
   TensorImpl view(const std::vector<int64_t> &dims) const;
   TensorImpl reshape(const std::vector<int64_t> &dims) const;
   TensorImpl transpose() const;
+  TensorImpl contiguous() const;
 };
 }  // namespace kiln

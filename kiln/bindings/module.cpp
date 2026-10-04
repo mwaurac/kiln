@@ -67,5 +67,6 @@ PYBIND11_MODULE(_kiln, m) {
 
       .def("reshape", &kiln::Tensor::reshape, py::arg("dims"))
       .def("view", &kiln::Tensor::view, py::arg("dims"))
-      .def("transpose", &kiln::Tensor::transpose);
+      .def("transpose", &kiln::Tensor::transpose)
+      .def("contiguous", &kiln::Tensor::contiguous);
 }
