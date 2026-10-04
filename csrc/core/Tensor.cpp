@@ -81,6 +81,10 @@ Tensor Tensor::transpose() const {
   return Tensor(std::make_shared<TensorImpl>(impl_->transpose()));
 }
 
+Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
+  return Tensor(std::make_shared<TensorImpl>(impl_->transpose(dim0, dim1)));
+}
+
 Tensor Tensor::contiguous() const {
   return Tensor(std::make_shared<TensorImpl>(impl_->contiguous()));
 }

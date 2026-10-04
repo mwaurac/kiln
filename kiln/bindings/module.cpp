@@ -62,11 +62,18 @@ PYBIND11_MODULE(_kiln, m) {
       .def_property_readonly("strides", &kiln::Tensor::strides)
       .def_property_readonly("dtype", &kiln::Tensor::dtype)
       .def_property_readonly("device", &kiln::Tensor::device)
+      .def_property_readonly("T", [](const kiln::Tensor &t) { return t.transpose(); })
+      .def_property_readonly("mT", [](const kiln::Tensor &t) { return t.transpose(-2, -1); })
 
       .def("numel", &kiln::Tensor::numel)
 
       .def("reshape", &kiln::Tensor::reshape, py::arg("dims"))
       .def("view", &kiln::Tensor::view, py::arg("dims"))
-      .def("transpose", &kiln::Tensor::transpose)
+      .def(
+          "transpose",
+          static_cast<kiln::Tensor (kiln::Tensor::*)(int64_t, int64_t) const>(
+              &kiln::Tensor::transpose),
+          py::arg("dim0"),
+          py::arg("dim1"))
       .def("contiguous", &kiln::Tensor::contiguous);
 }

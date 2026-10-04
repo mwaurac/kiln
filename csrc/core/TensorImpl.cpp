@@ -9,6 +9,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace kiln {
@@ -217,6 +218,30 @@ TensorImpl TensorImpl::transpose() const {
   }
 
   return TensorImpl(storage(), new_shape, new_strides, offset());
+}
+
+TensorImpl TensorImpl::transpose(int64_t dim0, int64_t dim1) const {
+  const std::size_t rank = shape_.size();
+  auto normalize = [rank](int64_t d, const char *name) -> std::size_t {
+    if (d < 0) {
+      d += static_cast<int64_t>(rank);
+    }
+    if (d < 0 || d >= static_cast<int64_t>(rank)) {
+      throw std::runtime_error("transpose: " + std::string(name) + " (" +
+          std::to_string(d < 0 ? d - static_cast<int64_t>(rank) : d) +
+          ") out of range for rank-" + std::to_string(rank) + " tensor");
+    }
+    return static_cast<std::size_t>(d);
+  };
+  const std::size_t d0 = normalize(dim0, "dim0");
+  const std::size_t d1 = normalize(dim1, "dim1");
+
+  Shape new_shape = shape_;
+  Strides new_strides = strides_;
+  std::swap(new_shape[d0], new_shape[d1]);
+  std::swap(new_strides[d0], new_strides[d1]);
+
+  return TensorImpl(storage_, new_shape, new_strides, offset_);
 }
 
 TensorImpl TensorImpl::contiguous() const {

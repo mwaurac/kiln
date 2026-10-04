@@ -32,6 +32,7 @@ class Tensor {
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;
   Tensor transpose() const;
+  Tensor transpose(int64_t dim0, int64_t dim1) const;
   Tensor contiguous() const;
 
   std::string print_tensor() const;
