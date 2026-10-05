@@ -23,15 +23,22 @@ class TensorImpl {
 
   Strides strides_;
   Shape shape_;
+  DType dtype_;
+  Device device_;
 
   void compute_strides();
 
  public:
-  TensorImpl(const Shape &shape, DType dtype, Device device = Device::CPU);
+  TensorImpl(const Shape &shape, DType dtype, Device device = Device::CPU, bool allocate = true);
   TensorImpl(std::shared_ptr<Storage> storage,
       const Shape &shape,
       const Strides &strides,
-      std::int64_t offset);
+      std::int64_t offset,
+      DType dtype,
+      Device device);
+
+  bool has_storage() const { return storage_ != nullptr; }
+  void allocate();
 
   const std::shared_ptr<Storage> &storage() const;
   const std::int64_t offset() const;

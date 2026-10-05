@@ -30,6 +30,10 @@ class Tensor {
   static Tensor empty(const Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
   static Tensor zeros(const Shape &shape, DType dtype, Device device);
   static Tensor ones(const Shape &shape, DType dtype, Device device);
+  static Tensor lazy(const Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
+
+  bool has_storage() const;
+  void allocate();
 
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;

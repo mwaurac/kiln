@@ -39,6 +39,8 @@ void Executor::execute(Node *n) {
     throw std::invalid_argument("Executor::execute: null node");
   }
 
+  n->out_.allocate();
+
   switch (n->op_) {
     case Op::NONE:
       break;

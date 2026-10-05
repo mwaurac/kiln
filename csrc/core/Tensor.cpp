@@ -69,6 +69,18 @@ Tensor Tensor::ones(const Shape &shape, DType dtype, Device device) {
   return t;
 }
 
+Tensor Tensor::lazy(const Shape &shape, DType dtype, Device device) {
+  return Tensor(std::make_shared<TensorImpl>(shape, dtype, device, /*allocate=*/false));
+}
+
+bool Tensor::has_storage() const {
+  return impl_->has_storage();
+}
+
+void Tensor::allocate() {
+  impl_->allocate();
+}
+
 Tensor Tensor::reshape(const std::vector<int64_t> &dims) const {
   return Tensor(std::make_shared<TensorImpl>(impl_->reshape(dims)));
 }

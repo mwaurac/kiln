@@ -14,16 +14,26 @@
 
 namespace kiln {
 
-TensorImpl::TensorImpl(const Shape &shape, DType dtype, Device device) : shape_(shape), offset_(0) {
-  storage_ = std::make_shared<Storage>(numel(), dtype, device);
+TensorImpl::TensorImpl(const Shape &shape, DType dtype, Device device, bool allocate)
+    : offset_(0), shape_(shape), dtype_(dtype), device_(device) {
+  if (allocate) {
+    storage_ = std::make_shared<Storage>(numel(), dtype_, device_);
+  }
   compute_strides();
 }
 
 TensorImpl::TensorImpl(std::shared_ptr<Storage> storage,
     const Shape &shape,
     const Strides &strides,
-    std::int64_t offset)
-    : storage_(std::move(storage)), shape_(shape), strides_(strides), offset_(offset) {}
+    std::int64_t offset,
+    DType dtype,
+    Device device)
+    : storage_(std::move(storage)),
+      offset_(offset),
+      strides_(strides),
+      shape_(shape),
+      dtype_(dtype),
+      device_(device) {}
 
 const std::size_t TensorImpl::numel() const {
   std::size_t numel = 1;
@@ -47,6 +57,12 @@ void TensorImpl::compute_strides() {
 
 const std::shared_ptr<Storage> &TensorImpl::storage() const {
   return storage_;
+}
+
+void TensorImpl::allocate() {
+  if (!storage_) {
+    storage_ = std::make_shared<Storage>(numel(), dtype_, device_);
+  }
 }
 
 const int64_t TensorImpl::offset() const {
@@ -79,11 +95,11 @@ bool TensorImpl::is_contiguous() const {
 }
 
 DType TensorImpl::dtype() const {
-  return storage_->dtype();
+  return dtype_;
 }
 
 Device TensorImpl::device() const {
-  return storage_->device();
+  return device_;
 }
 
 [[noreturn]] void bad_reshape(const char *msg) {
@@ -155,11 +171,14 @@ TensorImpl TensorImpl::view(const std::vector<int64_t> &dims) const {
     stride *= new_shape[i];
   }
 
-  return TensorImpl(storage(), new_shape, new_strides, offset());
+  return TensorImpl(storage(), new_shape, new_strides, offset(), dtype_, device_);
 }
 
 TensorImpl copy_contiguous(const TensorImpl &src) {
   Shape shape = src.shape();
+  if (!src.has_storage()) {
+    return TensorImpl(shape, src.dtype(), src.device(), false);
+  }
   TensorImpl out(shape, src.dtype(), src.device());
 
   const size_t esize = dtype_size(src.dtype());
@@ -217,7 +236,7 @@ TensorImpl TensorImpl::transpose() const {
     new_strides[i] = src_strides[rank - 1 - i];
   }
 
-  return TensorImpl(storage(), new_shape, new_strides, offset());
+  return TensorImpl(storage(), new_shape, new_strides, offset(), dtype_, device_);
 }
 
 TensorImpl TensorImpl::transpose(int64_t dim0, int64_t dim1) const {
@@ -241,7 +260,7 @@ TensorImpl TensorImpl::transpose(int64_t dim0, int64_t dim1) const {
   std::swap(new_shape[d0], new_shape[d1]);
   std::swap(new_strides[d0], new_strides[d1]);
 
-  return TensorImpl(storage_, new_shape, new_strides, offset_);
+  return TensorImpl(storage_, new_shape, new_strides, offset_, dtype_, device_);
 }
 
 TensorImpl TensorImpl::contiguous() const {
