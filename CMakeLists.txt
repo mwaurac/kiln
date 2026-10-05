@@ -21,6 +21,7 @@ csrc/core/TensorImpl.cpp
 csrc/core/Tensor.cpp
 csrc/core/Graph.cpp
 csrc/core/Op.cpp
+csrc/core/Executor.cpp
 )
 
 add_library(kiln_core STATIC
