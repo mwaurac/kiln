@@ -1,3 +1,5 @@
+#pragma once
+
 #include <core/Device.h>
 #include <core/Dtype.h>
 #include <core/TensorImpl.h>
@@ -36,6 +38,8 @@ class Tensor {
   Tensor contiguous() const;
 
   std::string print_tensor() const;
+
+  const std::shared_ptr<TensorImpl> &impl() const { return impl_; }
 
  private:
   explicit Tensor(std::shared_ptr<TensorImpl> impl) : impl_(std::move(impl)) {}
