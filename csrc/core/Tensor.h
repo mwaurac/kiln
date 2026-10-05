@@ -10,7 +10,7 @@
 namespace kiln {
 class Tensor {
  public:
-  Tensor(Shape &shape, DType dtype, Device device)
+  Tensor(const Shape &shape, DType dtype, Device device)
       : impl_(std::make_shared<TensorImpl>(shape, dtype, device)) {}
   Tensor() = delete;
 
@@ -25,9 +25,9 @@ class Tensor {
   Device device() const;
   const std::size_t numel() const;
 
-  static Tensor empty(Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
-  static Tensor zeros(Shape &shape, DType dtype, Device device);
-  static Tensor ones(Shape &shape, DType dtype, Device device);
+  static Tensor empty(const Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
+  static Tensor zeros(const Shape &shape, DType dtype, Device device);
+  static Tensor ones(const Shape &shape, DType dtype, Device device);
 
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;

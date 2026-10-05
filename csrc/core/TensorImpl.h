@@ -27,7 +27,7 @@ class TensorImpl {
   void compute_strides();
 
  public:
-  TensorImpl(Shape &shape, DType dtype, Device device = Device::CPU);
+  TensorImpl(const Shape &shape, DType dtype, Device device = Device::CPU);
   TensorImpl(std::shared_ptr<Storage> storage,
       const Shape &shape,
       const Strides &strides,

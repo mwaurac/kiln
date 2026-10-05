@@ -34,11 +34,11 @@ const std::size_t Tensor::numel() const {
   return impl_->numel();
 }
 
-Tensor Tensor::empty(Shape &shape, DType dtype, Device device) {
+Tensor Tensor::empty(const Shape &shape, DType dtype, Device device) {
   return Tensor(shape, dtype, device);
 }
 
-Tensor Tensor::zeros(Shape &shape, DType dtype, Device device) {
+Tensor Tensor::zeros(const Shape &shape, DType dtype, Device device) {
   Tensor t(shape, dtype, device);
 
   if (t.impl_->storage()->data() != nullptr) {
@@ -47,7 +47,7 @@ Tensor Tensor::zeros(Shape &shape, DType dtype, Device device) {
   return t;
 }
 
-Tensor Tensor::ones(Shape &shape, DType dtype, Device device) {
+Tensor Tensor::ones(const Shape &shape, DType dtype, Device device) {
   Tensor t(shape, dtype, device);
 
   auto *data = t.impl_->storage()->data();

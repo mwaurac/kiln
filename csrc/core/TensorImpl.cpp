@@ -14,7 +14,7 @@
 
 namespace kiln {
 
-TensorImpl::TensorImpl(Shape &shape, DType dtype, Device device) : shape_(shape), offset_(0) {
+TensorImpl::TensorImpl(const Shape &shape, DType dtype, Device device) : shape_(shape), offset_(0) {
   storage_ = std::make_shared<Storage>(numel(), dtype, device);
   compute_strides();
 }
