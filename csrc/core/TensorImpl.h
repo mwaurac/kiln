@@ -23,15 +23,24 @@ class TensorImpl {
 
   Strides strides_;
   Shape shape_;
+  DType dtype_;
+  Device device_;
 
   void compute_strides();
 
  public:
-  TensorImpl(Shape &shape, DType dtype, Device device = Device::CPU);
+  TensorImpl(const Shape &shape, DType dtype, Device device = Device::CPU, bool allocate = true);
   TensorImpl(std::shared_ptr<Storage> storage,
       const Shape &shape,
-      Strides strides,
-      std::size_t offset);
+      const Strides &strides,
+      std::int64_t offset,
+      DType dtype,
+      Device device);
+
+  bool has_storage() const {
+    return storage_ != nullptr;
+  }
+  void allocate();
 
   const std::shared_ptr<Storage> &storage() const;
   const std::int64_t offset() const;
@@ -40,5 +49,26 @@ class TensorImpl {
   const Shape shape() const;
   const Strides strides() const;
   const std::size_t numel() const;
+  std::size_t nbytes() const;
+  std::size_t itemsize() const;
+  bool is_contiguous() const;
+
+  void *data();
+  const void *data() const;
+
+  float *data_f32();
+  const float *data_f32() const;
+  std::uint16_t *data_f16();
+  const std::uint16_t *data_f16() const;
+  std::uint16_t *data_bf16();
+  const std::uint16_t *data_bf16() const;
+  block_q8_0 *data_q8_0();
+  const block_q8_0 *data_q8_0() const;
+
+  TensorImpl view(const std::vector<int64_t> &dims) const;
+  TensorImpl reshape(const std::vector<int64_t> &dims) const;
+  TensorImpl transpose() const;
+  TensorImpl transpose(int64_t dim0, int64_t dim1) const;
+  TensorImpl contiguous() const;
 };
 }  // namespace kiln
