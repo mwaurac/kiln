@@ -35,8 +35,12 @@ class Graph {
   Node *add_node(std::string name, Op op, Tensor src1, Tensor src2, Tensor out);
   Node *find(const Tensor &t) const;
 
-  std::size_t size() const { return nodes_.size(); }
-  const std::vector<std::unique_ptr<Node>> &nodes() const { return nodes_; }
+  std::size_t size() const {
+    return nodes_.size();
+  }
+  const std::vector<std::unique_ptr<Node>> &nodes() const {
+    return nodes_;
+  }
 
  private:
   std::vector<std::unique_ptr<Node>> nodes_;

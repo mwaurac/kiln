@@ -8,6 +8,7 @@ try:
         DType,
         Device,
         Tensor,
+        execute,
         float32,
         f16,
         bf16,
@@ -15,6 +16,8 @@ try:
         empty,
         zeros,
         ones,
+        nbytes,
+        itemsize,
     )
 except ImportError as e:  # pragma: no cover
     raise ImportError(
@@ -27,6 +30,7 @@ __all__ = [
     "Device",
     "DType",
     "Tensor",
+    "execute",
     "float32",
     "f16",
     "bf16",
@@ -34,4 +38,6 @@ __all__ = [
     "empty",
     "zeros",
     "ones",
+    "nbytes",
+    "itemsize",
 ]

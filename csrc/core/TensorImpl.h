@@ -37,7 +37,9 @@ class TensorImpl {
       DType dtype,
       Device device);
 
-  bool has_storage() const { return storage_ != nullptr; }
+  bool has_storage() const {
+    return storage_ != nullptr;
+  }
   void allocate();
 
   const std::shared_ptr<Storage> &storage() const;
@@ -47,7 +49,21 @@ class TensorImpl {
   const Shape shape() const;
   const Strides strides() const;
   const std::size_t numel() const;
+  std::size_t nbytes() const;
+  std::size_t itemsize() const;
   bool is_contiguous() const;
+
+  void *data();
+  const void *data() const;
+
+  float *data_f32();
+  const float *data_f32() const;
+  std::uint16_t *data_f16();
+  const std::uint16_t *data_f16() const;
+  std::uint16_t *data_bf16();
+  const std::uint16_t *data_bf16() const;
+  block_q8_0 *data_q8_0();
+  const block_q8_0 *data_q8_0() const;
 
   TensorImpl view(const std::vector<int64_t> &dims) const;
   TensorImpl reshape(const std::vector<int64_t> &dims) const;

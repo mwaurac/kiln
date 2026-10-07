@@ -34,6 +34,58 @@ const std::size_t Tensor::numel() const {
   return impl_->numel();
 }
 
+std::size_t Tensor::nbytes() const {
+  return impl_->nbytes();
+}
+
+std::size_t Tensor::itemsize() const {
+  return impl_->itemsize();
+}
+
+bool Tensor::is_contiguous() const {
+  return impl_->is_contiguous();
+}
+
+void *Tensor::data() {
+  return impl_->data();
+}
+
+const void *Tensor::data() const {
+  return impl_->data();
+}
+
+float *Tensor::data_f32() {
+  return impl_->data_f32();
+}
+
+const float *Tensor::data_f32() const {
+  return impl_->data_f32();
+}
+
+std::uint16_t *Tensor::data_f16() {
+  return impl_->data_f16();
+}
+
+const std::uint16_t *Tensor::data_f16() const {
+  return impl_->data_f16();
+}
+
+std::uint16_t *Tensor::data_bf16() {
+  return impl_->data_bf16();
+}
+
+const std::uint16_t *Tensor::data_bf16() const {
+  return impl_->data_bf16();
+}
+
+block_q8_0 *Tensor::data_q8_0() {
+  return impl_->data_q8_0();
+}
+
+const block_q8_0 *Tensor::data_q8_0() const {
+  return impl_->data_q8_0();
+}
+
 Tensor Tensor::empty(const Shape &shape, DType dtype, Device device) {
   return Tensor(shape, dtype, device);
 }
@@ -41,29 +93,34 @@ Tensor Tensor::empty(const Shape &shape, DType dtype, Device device) {
 Tensor Tensor::zeros(const Shape &shape, DType dtype, Device device) {
   Tensor t(shape, dtype, device);
 
-  if (t.impl_->storage()->data() != nullptr) {
-    std::memset(t.impl_->storage()->data(), 0, t.impl_->storage()->nbytes());
+  if (t.numel() == 0) {
+    return t;
   }
+  std::memset(t.data(), 0, t.nbytes());
   return t;
 }
 
 Tensor Tensor::ones(const Shape &shape, DType dtype, Device device) {
   Tensor t(shape, dtype, device);
 
-  auto *data = t.impl_->storage()->data();
-  auto numel = t.impl_->numel();
+  auto numel = t.numel();
+  if (numel == 0) {
+    return t;
+  }
 
   switch (dtype) {
     case kiln::DType::F32:
-      std::fill(static_cast<float *>(data), static_cast<float *>(data) + numel, 1.0f);
+      std::fill(t.data_f32(), t.data_f32() + numel, 1.0f);
       break;
-    case F16:
-      // TODO: unimplemented
+    case kiln::DType::F16:
+      std::fill(t.data_f16(), t.data_f16() + numel, std::uint16_t(0x3C00));
       break;
-    case BF16:
+    case kiln::DType::BF16:
+      std::fill(t.data_bf16(), t.data_bf16() + numel, std::uint16_t(0x3F80));
       break;
-    case Q8_0:
-      break;
+    default:
+      throw std::runtime_error(
+          "ones: unsupported dtype " + dtype_name(dtype) + " (only f32/f16/bf16 are supported)");
   }
 
   return t;

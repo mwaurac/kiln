@@ -69,6 +69,84 @@ const int64_t TensorImpl::offset() const {
   return offset_;
 }
 
+std::size_t TensorImpl::nbytes() const {
+  return kiln::nbytes(numel(), dtype_);
+}
+
+std::size_t TensorImpl::itemsize() const {
+  return dtype_itemsize(dtype_);
+}
+
+void *TensorImpl::data() {
+  if (!storage_) {
+    throw std::runtime_error("TensorImpl::data: tensor has no storage (lazy tensor)");
+  }
+  if (storage_->data() == nullptr) {
+    if (nbytes() == 0) {
+      return nullptr;
+    }
+    throw std::runtime_error("TensorImpl::data: storage data is null");
+  }
+  auto *base = static_cast<char *>(storage_->data());
+  return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
+}
+
+const void *TensorImpl::data() const {
+  if (!storage_) {
+    throw std::runtime_error("TensorImpl::data: tensor has no storage (lazy tensor)");
+  }
+  if (storage_->data() == nullptr) {
+    if (nbytes() == 0) {
+      return nullptr;
+    }
+    throw std::runtime_error("TensorImpl::data: storage data is null");
+  }
+  const auto *base = static_cast<const char *>(storage_->data());
+  return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
+}
+
+namespace {
+void require_dtype(DType actual, DType expected, const char *what) {
+  if (actual != expected) {
+    throw std::runtime_error(std::string(what) + ": dtype mismatch: tensor is " +
+                             dtype_name(actual) + ", accessor requires " + dtype_name(expected));
+  }
+}
+}  // namespace
+
+float *TensorImpl::data_f32() {
+  require_dtype(dtype_, DType::F32, "TensorImpl::data_f32");
+  return static_cast<float *>(data());
+}
+const float *TensorImpl::data_f32() const {
+  require_dtype(dtype_, DType::F32, "TensorImpl::data_f32");
+  return static_cast<const float *>(data());
+}
+std::uint16_t *TensorImpl::data_f16() {
+  require_dtype(dtype_, DType::F16, "TensorImpl::data_f16");
+  return static_cast<std::uint16_t *>(data());
+}
+const std::uint16_t *TensorImpl::data_f16() const {
+  require_dtype(dtype_, DType::F16, "TensorImpl::data_f16");
+  return static_cast<const std::uint16_t *>(data());
+}
+std::uint16_t *TensorImpl::data_bf16() {
+  require_dtype(dtype_, DType::BF16, "TensorImpl::data_bf16");
+  return static_cast<std::uint16_t *>(data());
+}
+const std::uint16_t *TensorImpl::data_bf16() const {
+  require_dtype(dtype_, DType::BF16, "TensorImpl::data_bf16");
+  return static_cast<const std::uint16_t *>(data());
+}
+block_q8_0 *TensorImpl::data_q8_0() {
+  require_dtype(dtype_, DType::Q8_0, "TensorImpl::data_q8_0");
+  return static_cast<block_q8_0 *>(data());
+}
+const block_q8_0 *TensorImpl::data_q8_0() const {
+  require_dtype(dtype_, DType::Q8_0, "TensorImpl::data_q8_0");
+  return static_cast<const block_q8_0 *>(data());
+}
+
 const Shape TensorImpl::shape() const {
   return shape_;
 }
@@ -181,20 +259,25 @@ TensorImpl copy_contiguous(const TensorImpl &src) {
   }
   TensorImpl out(shape, src.dtype(), src.device());
 
-  const size_t esize = dtype_size(src.dtype());
   const size_t n = src.numel();
   auto *dst = static_cast<char *>(out.storage()->data());
-  auto *base =
-      static_cast<const char *>(src.storage()->data()) + static_cast<size_t>(src.offset()) * esize;
+  auto *base = static_cast<const char *>(src.storage()->data()) +
+               kiln::nbytes(static_cast<size_t>(src.offset()), src.dtype());
 
   if (n == 0) {
     return out;
   }
 
   if (src.is_contiguous()) {
-    std::memcpy(dst, base, n * esize);
+    std::memcpy(dst, base, kiln::nbytes(n, src.dtype()));
     return out;
   }
+
+  if (dtype_is_quantized(src.dtype())) {
+    throw std::runtime_error("copy_contiguous: strided copy of block-quantized dtype " +
+                             dtype_name(src.dtype()) + " is not supported");
+  }
+  const size_t esize = dtype_itemsize(src.dtype());
 
   const Strides strides = src.strides();
   const size_t rank = shape.size();
@@ -247,8 +330,8 @@ TensorImpl TensorImpl::transpose(int64_t dim0, int64_t dim1) const {
     }
     if (d < 0 || d >= static_cast<int64_t>(rank)) {
       throw std::runtime_error("transpose: " + std::string(name) + " (" +
-          std::to_string(d < 0 ? d - static_cast<int64_t>(rank) : d) +
-          ") out of range for rank-" + std::to_string(rank) + " tensor");
+                               std::to_string(d < 0 ? d - static_cast<int64_t>(rank) : d) +
+                               ") out of range for rank-" + std::to_string(rank) + " tensor");
     }
     return static_cast<std::size_t>(d);
   };

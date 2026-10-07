@@ -1,5 +1,7 @@
 #pragma once
 
+#include <core/Tensor.h>
+
 #include <cstdint>
 
 namespace kiln {
@@ -22,4 +24,6 @@ static const char *OP_NAME[OPS_COUNT] = {
     "RELU",
     "SOFTMAX",
 };
+
+Tensor add(const Tensor &a, const Tensor &b);
 }  // namespace kiln

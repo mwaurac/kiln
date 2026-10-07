@@ -26,6 +26,9 @@ class Tensor {
   DType dtype() const;
   Device device() const;
   const std::size_t numel() const;
+  std::size_t nbytes() const;
+  std::size_t itemsize() const;
+  bool is_contiguous() const;
 
   static Tensor empty(const Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
   static Tensor zeros(const Shape &shape, DType dtype, Device device);
@@ -35,6 +38,18 @@ class Tensor {
   bool has_storage() const;
   void allocate();
 
+  void *data();
+  const void *data() const;
+
+  float *data_f32();
+  const float *data_f32() const;
+  std::uint16_t *data_f16();
+  const std::uint16_t *data_f16() const;
+  std::uint16_t *data_bf16();
+  const std::uint16_t *data_bf16() const;
+  block_q8_0 *data_q8_0();
+  const block_q8_0 *data_q8_0() const;
+
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;
   Tensor transpose() const;
@@ -43,7 +58,9 @@ class Tensor {
 
   std::string print_tensor() const;
 
-  const std::shared_ptr<TensorImpl> &impl() const { return impl_; }
+  const std::shared_ptr<TensorImpl> &impl() const {
+    return impl_;
+  }
 
  private:
   explicit Tensor(std::shared_ptr<TensorImpl> impl) : impl_(std::move(impl)) {}

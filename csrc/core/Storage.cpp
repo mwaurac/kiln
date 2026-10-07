@@ -11,7 +11,7 @@ Storage::Storage(std::size_t numel, DType dtype, Device device) : numel_(numel),
 }
 
 std::size_t Storage::nbytes() const {
-  return numel_ * dtype_size(dtype_);
+  return kiln::nbytes(numel_, dtype_);
 }
 
 const void *Storage::data() const {
