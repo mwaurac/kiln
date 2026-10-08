@@ -130,6 +130,29 @@ Tensor Tensor::lazy(const Shape &shape, DType dtype, Device device) {
   return Tensor(std::make_shared<TensorImpl>(shape, dtype, device, /*allocate=*/false));
 }
 
+Tensor Tensor::from_blob(void *data,
+    const Shape &shape,
+    const Strides &strides,
+    DType dtype,
+    Device device,
+    std::shared_ptr<void> owner) {
+  if (strides.size() != shape.size()) {
+    throw std::runtime_error("from_blob: strides rank (" + std::to_string(strides.size()) +
+                             ") does not match shape rank (" + std::to_string(shape.size()) + ")");
+  }
+  std::size_t numel = 1;
+  for (std::uint64_t dim : shape) {
+    numel *= dim;
+  }
+  auto storage = std::make_shared<Storage>(data, numel, dtype, device, std::move(owner));
+  TensorImpl impl(storage, shape, strides, /*offset=*/0, dtype, device);
+  if (dtype_is_quantized(dtype) && !impl.is_contiguous()) {
+    throw std::runtime_error("from_blob: non-contiguous views of block-quantized dtype " +
+                             dtype_name(dtype) + " are not supported");
+  }
+  return Tensor(std::make_shared<TensorImpl>(std::move(impl)));
+}
+
 bool Tensor::has_storage() const {
   return impl_->has_storage();
 }
@@ -159,11 +182,12 @@ Tensor Tensor::contiguous() const {
 }
 
 std::string Tensor::print_tensor() const {
+  const Shape dims = shape();
   std::string s = "kiln.Tensor(shape=[";
 
-  for (size_t i = 0; i < shape().size(); ++i) {
-    s += std::to_string(shape()[i]);
-    if (i + 1 < shape().size()) {
+  for (size_t i = 0; i < dims.size(); ++i) {
+    s += std::to_string(dims[i]);
+    if (i + 1 < dims.size()) {
       s += ", ";
     }
   }

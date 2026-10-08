@@ -18,6 +18,8 @@ try:
         ones,
         nbytes,
         itemsize,
+        from_numpy,
+        from_buffer,
     )
 except ImportError as e:  # pragma: no cover
     raise ImportError(
@@ -40,4 +42,6 @@ __all__ = [
     "ones",
     "nbytes",
     "itemsize",
+    "from_numpy",
+    "from_buffer",
 ]
