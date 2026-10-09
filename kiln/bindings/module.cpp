@@ -1,6 +1,7 @@
 #include <core/Device.h>
 #include <core/Dtype.h>
 #include <core/Executor.h>
+#include <core/Layout.h>
 #include <core/Tensor.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -154,17 +155,6 @@ PYBIND11_MODULE(_kiln, m) {
               "from_buffer: buffer is read-only and cannot be shared mutably; pass a writeable "
               "buffer (bytearray, writeable ndarray/memoryview)");
         }
-        std::size_t numel = 1;
-        for (std::uint64_t dim : shape) {
-          numel *= dim;
-        }
-        const std::size_t need = kiln::nbytes(numel, dtype);
-        const std::size_t have =
-            static_cast<std::size_t>(info.size) * static_cast<std::size_t>(info.itemsize);
-        if (have < need) {
-          throw std::runtime_error("from_buffer: buffer holds " + std::to_string(have) +
-                                   " bytes but shape/dtype need " + std::to_string(need));
-        }
         kiln::Shape kshape(shape.begin(), shape.end());
         kiln::Strides kstrides;
         if (strides) {
@@ -173,12 +163,15 @@ PYBIND11_MODULE(_kiln, m) {
           }
           kstrides.assign(strides->begin(), strides->end());
         } else {
-          kstrides.resize(kshape.size());
-          std::size_t stride = 1;
-          for (std::size_t i = kshape.size(); i-- > 0;) {
-            kstrides[i] = stride;
-            stride *= kshape[i];
-          }
+          kstrides = kiln::Layout::contiguous(kshape).strides_vec();
+        }
+        std::size_t numel = kiln::Layout(kshape, kstrides).numel();
+        const std::size_t need = kiln::nbytes(numel, dtype);
+        const std::size_t have =
+            static_cast<std::size_t>(info.size) * static_cast<std::size_t>(info.itemsize);
+        if (have < need) {
+          throw std::runtime_error("from_buffer: buffer holds " + std::to_string(have) +
+                                   " bytes but shape/dtype need " + std::to_string(need));
         }
         return kiln::Tensor::from_blob(info.ptr,
             kshape,

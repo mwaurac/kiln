@@ -1,5 +1,6 @@
 #include <core/Device.h>
 #include <core/Dtype.h>
+#include <core/Layout.h>
 #include <core/Tensor.h>
 #include <core/TensorImpl.h>
 
@@ -136,16 +137,10 @@ Tensor Tensor::from_blob(void *data,
     DType dtype,
     Device device,
     std::shared_ptr<void> owner) {
-  if (strides.size() != shape.size()) {
-    throw std::runtime_error("from_blob: strides rank (" + std::to_string(strides.size()) +
-                             ") does not match shape rank (" + std::to_string(shape.size()) + ")");
-  }
-  std::size_t numel = 1;
-  for (std::uint64_t dim : shape) {
-    numel *= dim;
-  }
-  auto storage = std::make_shared<Storage>(data, numel, dtype, device, std::move(owner));
-  TensorImpl impl(storage, shape, strides, /*offset=*/0, dtype, device);
+  Layout layout(shape, strides);
+  auto storage =
+      std::make_shared<Storage>(data, layout.numel(), dtype, device, std::move(owner));
+  TensorImpl impl(storage, layout, /*offset=*/0, dtype, device);
   if (dtype_is_quantized(dtype) && !impl.is_contiguous()) {
     throw std::runtime_error("from_blob: non-contiguous views of block-quantized dtype " +
                              dtype_name(dtype) + " are not supported");

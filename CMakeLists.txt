@@ -16,6 +16,7 @@ set(KILN_SOURCES
 csrc/core/Dtype.cpp
 csrc/core/Device.cpp
 csrc/core/Allocator.cpp
+csrc/core/Layout.cpp
 csrc/core/Storage.cpp
 csrc/core/TensorImpl.cpp
 csrc/core/Tensor.cpp

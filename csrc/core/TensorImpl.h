@@ -2,6 +2,7 @@
 
 #include <core/Device.h>
 #include <core/Dtype.h>
+#include <core/Layout.h>
 #include <core/Storage.h>
 
 #include <cstddef>
@@ -13,23 +14,22 @@ namespace kiln {
 
 class Storage;
 
-using Strides = std::vector<uint64_t>;
-using Shape = std::vector<uint64_t>;
-
 class TensorImpl {
  private:
   std::shared_ptr<Storage> storage_;
   std::int64_t offset_;
 
-  Strides strides_;
-  Shape shape_;
+  Layout layout_;
   DType dtype_;
   Device device_;
 
-  void compute_strides();
-
  public:
   TensorImpl(const Shape &shape, DType dtype, Device device = Device::CPU, bool allocate = true);
+  TensorImpl(std::shared_ptr<Storage> storage,
+      const Layout &layout,
+      std::int64_t offset,
+      DType dtype,
+      Device device);
   TensorImpl(std::shared_ptr<Storage> storage,
       const Shape &shape,
       const Strides &strides,
@@ -48,6 +48,9 @@ class TensorImpl {
   Device device() const;
   const Shape shape() const;
   const Strides strides() const;
+  const Layout &layout() const {
+    return layout_;
+  }
   const std::size_t numel() const;
   std::size_t nbytes() const;
   std::size_t itemsize() const;

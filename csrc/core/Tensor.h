@@ -2,6 +2,7 @@
 
 #include <core/Device.h>
 #include <core/Dtype.h>
+#include <core/Layout.h>
 #include <core/TensorImpl.h>
 
 #include <cstddef>
