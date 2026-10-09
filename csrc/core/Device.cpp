@@ -1,6 +1,6 @@
+#include <common/Error.h>
 #include <core/Device.h>
 
-#include <stdexcept>
 #include <string>
 
 namespace kiln {
@@ -12,7 +12,7 @@ const std::string device_name(Device d) {
     case Device::CUDA:
       return "cuda";
     default:
-      throw std::invalid_argument("Unsupported device");
+      KILN_ERROR("Unsupported device");
   }
 }
 }  // namespace kiln

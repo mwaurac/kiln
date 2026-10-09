@@ -1,3 +1,4 @@
+#include <common/Error.h>
 #include <core/Device.h>
 #include <core/Dtype.h>
 #include <core/Layout.h>
@@ -7,7 +8,6 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,8 +26,11 @@ TensorImpl::TensorImpl(std::shared_ptr<Storage> storage,
     std::int64_t offset,
     DType dtype,
     Device device)
-    : storage_(std::move(storage)), offset_(offset), layout_(layout), dtype_(dtype), device_(device) {
-}
+    : storage_(std::move(storage)),
+      offset_(offset),
+      layout_(layout),
+      dtype_(dtype),
+      device_(device) {}
 
 TensorImpl::TensorImpl(std::shared_ptr<Storage> storage,
     const Shape &shape,
@@ -68,28 +71,24 @@ std::size_t TensorImpl::itemsize() const {
 }
 
 void *TensorImpl::data() {
-  if (!storage_) {
-    throw std::runtime_error("TensorImpl::data: tensor has no storage (lazy tensor)");
-  }
+  KILN_CHECK(storage_ != nullptr, "TensorImpl::data: tensor has no storage (lazy tensor)");
   if (storage_->data() == nullptr) {
     if (nbytes() == 0) {
       return nullptr;
     }
-    throw std::runtime_error("TensorImpl::data: storage data is null");
+    KILN_ERROR("TensorImpl::data: storage data is null");
   }
   auto *base = static_cast<char *>(storage_->data());
   return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
 }
 
 const void *TensorImpl::data() const {
-  if (!storage_) {
-    throw std::runtime_error("TensorImpl::data: tensor has no storage (lazy tensor)");
-  }
+  KILN_CHECK(storage_ != nullptr, "TensorImpl::data: tensor has no storage (lazy tensor)");
   if (storage_->data() == nullptr) {
     if (nbytes() == 0) {
       return nullptr;
     }
-    throw std::runtime_error("TensorImpl::data: storage data is null");
+    KILN_ERROR("TensorImpl::data: storage data is null");
   }
   const auto *base = static_cast<const char *>(storage_->data());
   return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
@@ -97,10 +96,12 @@ const void *TensorImpl::data() const {
 
 namespace {
 void require_dtype(DType actual, DType expected, const char *what) {
-  if (actual != expected) {
-    throw std::runtime_error(std::string(what) + ": dtype mismatch: tensor is " +
-                             dtype_name(actual) + ", accessor requires " + dtype_name(expected));
-  }
+  KILN_CHECK(actual == expected,
+      what,
+      ": dtype mismatch: tensor is ",
+      dtype_name(actual),
+      ", accessor requires ",
+      dtype_name(expected));
 }
 }  // namespace
 
@@ -183,8 +184,9 @@ TensorImpl copy_contiguous(const TensorImpl &src) {
   }
 
   if (dtype_is_quantized(src.dtype())) {
-    throw std::runtime_error("copy_contiguous: strided copy of block-quantized dtype " +
-                             dtype_name(src.dtype()) + " is not supported");
+    KILN_ERROR("copy_contiguous: strided copy of block-quantized dtype ",
+        dtype_name(src.dtype()),
+        " is not supported");
   }
   const size_t esize = dtype_itemsize(src.dtype());
 

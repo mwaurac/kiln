@@ -1,9 +1,9 @@
+#include <common/Error.h>
 #include <core/Layout.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -11,14 +11,17 @@
 namespace kiln {
 namespace {
 void require_rank(std::size_t rank, const char *what) {
-  if (rank > Layout::kMaxDims) {
-    throw std::runtime_error(std::string(what) + ": rank (" + std::to_string(rank) +
-                             ") exceeds max dims (" + std::to_string(Layout::kMaxDims) + ")");
-  }
+  KILN_CHECK(rank <= Layout::kMaxDims,
+      what,
+      ": rank (",
+      rank,
+      ") exceeds max dims (",
+      Layout::kMaxDims,
+      ")");
 }
 
 [[noreturn]] void bad_reshape(const char *msg) {
-  throw std::runtime_error(std::string("view/reshape: ") + msg);
+  KILN_ERROR("view/reshape: ", msg);
 }
 
 std::uint64_t infer_dim(std::size_t numel, std::size_t known_product) {
@@ -42,10 +45,12 @@ Layout::Layout() : rank_(0) {
 
 Layout::Layout(const Shape &shape, const Strides &strides) {
   require_rank(shape.size(), "Layout");
-  if (strides.size() != shape.size()) {
-    throw std::runtime_error("Layout: strides rank (" + std::to_string(strides.size()) +
-                             ") does not match shape rank (" + std::to_string(shape.size()) + ")");
-  }
+  KILN_CHECK(strides.size() == shape.size(),
+      "Layout: strides rank (",
+      strides.size(),
+      ") does not match shape rank (",
+      shape.size(),
+      ")");
   rank_ = shape.size();
   shape_.fill(0);
   strides_.fill(0);
@@ -71,18 +76,22 @@ Layout Layout::contiguous(const Shape &shape) {
 }
 
 std::uint64_t Layout::shape(std::size_t dim) const {
-  if (dim >= rank_) {
-    throw std::runtime_error("Layout::shape: dim (" + std::to_string(dim) + ") out of range for rank-" +
-                             std::to_string(rank_) + " layout");
-  }
+  KILN_CHECK(dim < rank_,
+      "Layout::shape: dim (",
+      dim,
+      ") out of range for rank-",
+      rank_,
+      " layout");
   return shape_[dim];
 }
 
 std::uint64_t Layout::stride(std::size_t dim) const {
-  if (dim >= rank_) {
-    throw std::runtime_error("Layout::stride: dim (" + std::to_string(dim) +
-                             ") out of range for rank-" + std::to_string(rank_) + " layout");
-  }
+  KILN_CHECK(dim < rank_,
+      "Layout::stride: dim (",
+      dim,
+      ") out of range for rank-",
+      rank_,
+      " layout");
   return strides_[dim];
 }
 
@@ -147,8 +156,7 @@ Layout Layout::transpose(std::int64_t dim0, std::int64_t dim1) const {
       d += rank;
     }
     if (d < 0 || d >= rank) {
-      throw std::runtime_error("transpose: " + std::string(name) + " (" + std::to_string(orig) +
-                               ") out of range for rank-" + std::to_string(rank_) + " tensor");
+      KILN_ERROR("transpose: ", name, " (", orig, ") out of range for rank-", rank_, " tensor");
     }
     return static_cast<std::size_t>(d);
   };

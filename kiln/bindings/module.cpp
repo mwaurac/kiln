@@ -1,3 +1,4 @@
+#include <common/Error.h>
 #include <core/Device.h>
 #include <core/Dtype.h>
 #include <core/Executor.h>
@@ -10,7 +11,6 @@
 #include <bit>
 #include <cstddef>
 #include <cstring>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -99,38 +99,28 @@ PYBIND11_MODULE(_kiln, m) {
       "from_numpy",
       [](py::array arr) {
         const py::dtype dt = arr.dtype();
-        if (dt.kind() != 'f' || dt.itemsize() != 4 || !is_native_byteorder(dt.byteorder())) {
-          throw std::runtime_error(
-              "from_numpy: only native float32 arrays are supported, got dtype " +
-              py::str(dt).cast<std::string>());
-        }
-        if (!arr.writeable()) {
-          throw std::runtime_error(
-              "from_numpy: array shares memory with the tensor, so it must be writeable; pass a "
-              "writeable copy (arr.copy())");
-        }
+        KILN_CHECK(dt.kind() == 'f' && dt.itemsize() == 4 && is_native_byteorder(dt.byteorder()),
+            "from_numpy: only native float32 arrays are supported, got dtype ",
+            py::str(dt).cast<std::string>());
+        KILN_CHECK(arr.writeable(),
+            "from_numpy: array shares memory with the tensor, so it must "
+            "be writeable; pass a writeable copy (arr.copy())");
         const py::ssize_t ndim = arr.ndim();
         kiln::Shape shape;
         shape.reserve(static_cast<std::size_t>(ndim));
         for (py::ssize_t d = 0; d < ndim; ++d) {
           const py::ssize_t dim = arr.shape(d);
-          if (dim < 0) {
-            throw std::runtime_error("from_numpy: negative dimension");
-          }
+          KILN_CHECK(dim >= 0, "from_numpy: negative dimension");
           shape.push_back(static_cast<std::uint64_t>(dim));
         }
         kiln::Strides strides;
         strides.reserve(static_cast<std::size_t>(ndim));
         for (py::ssize_t d = 0; d < ndim; ++d) {
           const py::ssize_t byte_stride = arr.strides(d);
-          if (byte_stride < 0) {
-            throw std::runtime_error(
-                "from_numpy: negative strides cannot be shared; pass a contiguous copy "
-                "(np.ascontiguousarray(arr))");
-          }
-          if (byte_stride % 4 != 0) {
-            throw std::runtime_error("from_numpy: byte stride is not a multiple of 4");
-          }
+          KILN_CHECK(byte_stride >= 0,
+              "from_numpy: negative strides cannot be shared; pass a "
+              "contiguous copy (np.ascontiguousarray(arr))");
+          KILN_CHECK(byte_stride % 4 == 0, "from_numpy: byte stride is not a multiple of 4");
           strides.push_back(static_cast<std::uint64_t>(byte_stride / 4));
         }
         return kiln::Tensor::from_blob(arr.mutable_data(),
@@ -150,17 +140,15 @@ PYBIND11_MODULE(_kiln, m) {
           kiln::DType dtype,
           std::optional<std::vector<std::uint64_t>> strides) {
         const py::buffer_info info = buf.request();
-        if (info.readonly) {
-          throw std::runtime_error(
-              "from_buffer: buffer is read-only and cannot be shared mutably; pass a writeable "
-              "buffer (bytearray, writeable ndarray/memoryview)");
-        }
+        KILN_CHECK(!info.readonly,
+            "from_buffer: buffer is read-only and cannot be shared "
+            "mutably; pass a writeable buffer (bytearray, writeable "
+            "ndarray/memoryview)");
         kiln::Shape kshape(shape.begin(), shape.end());
         kiln::Strides kstrides;
         if (strides) {
-          if (strides->size() != kshape.size()) {
-            throw std::runtime_error("from_buffer: strides rank does not match shape rank");
-          }
+          KILN_CHECK(strides->size() == kshape.size(),
+              "from_buffer: strides rank does not match shape rank");
           kstrides.assign(strides->begin(), strides->end());
         } else {
           kstrides = kiln::Layout::contiguous(kshape).strides_vec();
@@ -170,8 +158,7 @@ PYBIND11_MODULE(_kiln, m) {
         const std::size_t have =
             static_cast<std::size_t>(info.size) * static_cast<std::size_t>(info.itemsize);
         if (have < need) {
-          throw std::runtime_error("from_buffer: buffer holds " + std::to_string(have) +
-                                   " bytes but shape/dtype need " + std::to_string(need));
+          KILN_ERROR("from_buffer: buffer holds ", have, " bytes but shape/dtype need ", need);
         }
         return kiln::Tensor::from_blob(info.ptr,
             kshape,
@@ -212,14 +199,10 @@ PYBIND11_MODULE(_kiln, m) {
 
       .def("data",
           [](const kiln::Tensor &t) {
-            if (!t.has_storage()) {
-              throw std::runtime_error(
-                  "Tensor.data: tensor has no storage (lazy tensor); call execute() first");
-            }
-            if (!t.is_contiguous()) {
-              throw std::runtime_error(
-                  "Tensor.data: tensor is non-contiguous; call contiguous() first");
-            }
+            KILN_CHECK(t.has_storage(),
+                "Tensor.data: tensor has no storage (lazy tensor); call execute() first");
+            KILN_CHECK(t.is_contiguous(),
+                "Tensor.data: tensor is non-contiguous; call contiguous() first");
             const std::size_t n = t.nbytes();
             if (n == 0) {
               return py::bytes("", 0);
@@ -230,16 +213,11 @@ PYBIND11_MODULE(_kiln, m) {
       .def(
           "numpy",
           [](const kiln::Tensor &t) {
-            if (!t.has_storage()) {
-              throw std::runtime_error(
-                  "Tensor.numpy: tensor has no storage (lazy output); call execute() first");
-            }
-            if (t.dtype() != kiln::DType::F32) {
-              throw std::runtime_error(
-                  "Tensor.numpy: only float32 tensors are supported, got "
-                  "dtype " +
-                  kiln::dtype_name(t.dtype()));
-            }
+            KILN_CHECK(t.has_storage(),
+                "Tensor.numpy: tensor has no storage (lazy output); call execute() first");
+            KILN_CHECK(t.dtype() == kiln::DType::F32,
+                "Tensor.numpy: only float32 tensors are supported, got dtype ",
+                kiln::dtype_name(t.dtype()));
             const kiln::Tensor c = t.contiguous();
             const kiln::Shape kshape = c.shape();
             std::vector<py::ssize_t> shape(kshape.begin(), kshape.end());
