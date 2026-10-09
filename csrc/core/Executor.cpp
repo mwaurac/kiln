@@ -1,6 +1,6 @@
+#include <common/Error.h>
 #include <core/Executor.h>
 
-#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -35,9 +35,7 @@ void Executor::schedule(const Graph &g, const Tensor &output) {
 }
 
 void Executor::execute(Node *n) {
-  if (n == nullptr) {
-    throw std::invalid_argument("Executor::execute: null node");
-  }
+  KILN_CHECK(n != nullptr, "Executor::execute: null node");
 
   n->out_.allocate();
 
@@ -49,10 +47,9 @@ void Executor::execute(Node *n) {
     case Op::MATMUL:
     case Op::RELU:
     case Op::SOFTMAX:
-      throw std::runtime_error(
-          std::string("Executor::execute: op not implemented: ") + OP_NAME[n->op_]);
+      KILN_ERROR("Executor::execute: op not implemented: ", OP_NAME[n->op_]);
     default:
-      throw std::runtime_error("Executor::execute: unknown op");
+      KILN_ERROR("Executor::execute: unknown op");
   }
 }
 

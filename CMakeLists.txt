@@ -16,6 +16,7 @@ set(KILN_SOURCES
 csrc/core/Dtype.cpp
 csrc/core/Device.cpp
 csrc/core/Allocator.cpp
+csrc/core/Layout.cpp
 csrc/core/Storage.cpp
 csrc/core/TensorImpl.cpp
 csrc/core/Tensor.cpp
@@ -24,9 +25,13 @@ csrc/core/Op.cpp
 csrc/core/Executor.cpp
 )
 
+add_subdirectory(csrc/common)
+
 add_library(kiln_core STATIC
 ${KILN_SOURCES}
 )
+
+target_link_libraries(kiln_core PUBLIC kiln_common)
 
 target_include_directories(kiln_core PUBLIC "${PROJECT_SOURCE_DIR}/csrc")
 set_target_properties(kiln_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
