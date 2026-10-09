@@ -35,6 +35,13 @@ class Tensor {
   static Tensor ones(const Shape &shape, DType dtype, Device device);
   static Tensor lazy(const Shape &shape, DType dtype = DType::F32, Device device = Device::CPU);
 
+  static Tensor from_blob(void *data,
+      const Shape &shape,
+      const Strides &strides,
+      DType dtype,
+      Device device,
+      std::shared_ptr<void> owner);
+
   bool has_storage() const;
   void allocate();
 
