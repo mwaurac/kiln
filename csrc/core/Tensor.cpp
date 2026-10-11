@@ -47,12 +47,18 @@ bool Tensor::is_contiguous() const {
   return impl_->is_contiguous();
 }
 
+namespace {
+const TensorImpl *cimpl(const Tensor &t) {
+  return static_cast<const TensorImpl *>(t.impl().get());
+}
+}  // namespace
+
 void *Tensor::data() {
   return impl_->data();
 }
 
 const void *Tensor::data() const {
-  return impl_->data();
+  return cimpl(*this)->data();
 }
 
 float *Tensor::data_f32() {
@@ -60,7 +66,7 @@ float *Tensor::data_f32() {
 }
 
 const float *Tensor::data_f32() const {
-  return impl_->data_f32();
+  return cimpl(*this)->data_f32();
 }
 
 std::uint16_t *Tensor::data_f16() {
@@ -68,7 +74,7 @@ std::uint16_t *Tensor::data_f16() {
 }
 
 const std::uint16_t *Tensor::data_f16() const {
-  return impl_->data_f16();
+  return cimpl(*this)->data_f16();
 }
 
 std::uint16_t *Tensor::data_bf16() {
@@ -76,7 +82,7 @@ std::uint16_t *Tensor::data_bf16() {
 }
 
 const std::uint16_t *Tensor::data_bf16() const {
-  return impl_->data_bf16();
+  return cimpl(*this)->data_bf16();
 }
 
 block_q8_0 *Tensor::data_q8_0() {
@@ -84,7 +90,7 @@ block_q8_0 *Tensor::data_q8_0() {
 }
 
 const block_q8_0 *Tensor::data_q8_0() const {
-  return impl_->data_q8_0();
+  return cimpl(*this)->data_q8_0();
 }
 
 Tensor Tensor::empty(const Shape &shape, DType dtype, Device device) {
@@ -148,8 +154,32 @@ Tensor Tensor::from_blob(void *data,
   return Tensor(std::make_shared<TensorImpl>(std::move(impl)));
 }
 
+Tensor Tensor::from_blob(const void *data,
+    const Shape &shape,
+    const Strides &strides,
+    DType dtype,
+    Device device,
+    std::shared_ptr<void> owner) {
+  Layout layout(shape, strides);
+  auto storage = std::make_shared<Storage>(data, layout.numel(), dtype, device, std::move(owner));
+  TensorImpl impl(storage, layout, /*offset=*/0, dtype, device);
+  KILN_CHECK(!dtype_is_quantized(dtype) || impl.is_contiguous(),
+      "from_blob: non-contiguous views of block-quantized dtype ",
+      dtype_name(dtype),
+      " are not supported");
+  return Tensor(std::make_shared<TensorImpl>(std::move(impl)));
+}
+
 bool Tensor::has_storage() const {
   return impl_->has_storage();
+}
+
+bool Tensor::is_borrowed() const {
+  return impl_->is_borrowed();
+}
+
+bool Tensor::is_readonly() const {
+  return impl_->is_readonly();
 }
 
 void Tensor::allocate() {

@@ -55,6 +55,8 @@ class TensorImpl {
   std::size_t nbytes() const;
   std::size_t itemsize() const;
   bool is_contiguous() const;
+  bool is_borrowed() const;
+  bool is_readonly() const;
 
   void *data();
   const void *data() const;
