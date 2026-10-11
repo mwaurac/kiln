@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace kiln {
@@ -49,5 +50,7 @@ class Layout {
 
   static Strides contiguous_strides(const Shape &shape);
 };
+
+std::string shape_string(const Shape &shape);
 
 }  // namespace kiln

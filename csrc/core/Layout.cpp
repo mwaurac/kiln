@@ -219,6 +219,18 @@ Layout Layout::view(const std::vector<std::int64_t> &dims) const {
   return Layout::contiguous(new_shape);
 }
 
+std::string shape_string(const Shape &shape) {
+  std::string s = "[";
+  for (std::size_t i = 0; i < shape.size(); ++i) {
+    if (i > 0) {
+      s += ", ";
+    }
+    s += std::to_string(shape[i]);
+  }
+  s += "]";
+  return s;
+}
+
 bool Layout::operator==(const Layout &other) const {
   if (rank_ != other.rank_) {
     return false;

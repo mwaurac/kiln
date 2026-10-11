@@ -48,8 +48,17 @@ const std::size_t TensorImpl::numel() const {
   return layout_.numel();
 }
 
-const std::shared_ptr<Storage> &TensorImpl::storage() const {
-  return storage_;
+std::shared_ptr<Storage> TensorImpl::storage() const {
+  for (const TensorImpl *p = this; p != nullptr; p = p->base_.get()) {
+    if (p->storage_ != nullptr) {
+      return p->storage_;
+    }
+  }
+  return nullptr;
+}
+
+bool TensorImpl::has_storage() const {
+  return storage() != nullptr;
 }
 
 void TensorImpl::allocate() {
@@ -71,26 +80,31 @@ std::size_t TensorImpl::itemsize() const {
 }
 
 void *TensorImpl::data() {
-  KILN_CHECK(storage_ != nullptr, "TensorImpl::data: tensor has no storage (lazy tensor)");
-  if (storage_->data() == nullptr) {
+  auto s = storage();
+  KILN_CHECK(s != nullptr,
+      "TensorImpl::data: tensor has no storage (lazy tensor); call execute() first");
+  if (s->data() == nullptr) {
     if (nbytes() == 0) {
       return nullptr;
     }
     KILN_ERROR("TensorImpl::data: storage data is null");
   }
-  auto *base = static_cast<char *>(storage_->data());
+  auto *base = static_cast<char *>(s->data());
   return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
 }
 
 const void *TensorImpl::data() const {
-  KILN_CHECK(storage_ != nullptr, "TensorImpl::data: tensor has no storage (lazy tensor)");
-  if (storage_->data() == nullptr) {
+  auto s = storage();
+  KILN_CHECK(s != nullptr,
+      "TensorImpl::data: tensor has no storage (lazy tensor); call execute() first");
+  const auto *cref = static_cast<const Storage *>(s.get());
+  if (cref->data() == nullptr) {
     if (nbytes() == 0) {
       return nullptr;
     }
     KILN_ERROR("TensorImpl::data: storage data is null");
   }
-  const auto *base = static_cast<const char *>(storage_->data());
+  const auto *base = static_cast<const char *>(cref->data());
   return base + kiln::nbytes(static_cast<std::size_t>(offset_), dtype_);
 }
 
@@ -150,6 +164,16 @@ bool TensorImpl::is_contiguous() const {
   return layout_.is_contiguous();
 }
 
+bool TensorImpl::is_borrowed() const {
+  auto s = storage();
+  return s != nullptr && s->is_borrowed();
+}
+
+bool TensorImpl::is_readonly() const {
+  auto s = storage();
+  return s != nullptr && s->is_readonly();
+}
+
 DType TensorImpl::dtype() const {
   return dtype_;
 }
@@ -171,7 +195,8 @@ TensorImpl copy_contiguous(const TensorImpl &src) {
 
   const size_t n = src.numel();
   auto *dst = static_cast<char *>(out.storage()->data());
-  auto *base = static_cast<const char *>(src.storage()->data()) +
+  const auto *csrc = static_cast<const Storage *>(src.storage().get());
+  auto *base = static_cast<const char *>(csrc->data()) +
                kiln::nbytes(static_cast<size_t>(src.offset()), src.dtype());
 
   if (n == 0) {

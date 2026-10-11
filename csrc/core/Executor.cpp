@@ -37,10 +37,16 @@ void Executor::schedule(const Graph &g, const Tensor &output) {
 void Executor::execute(Node *n) {
   KILN_CHECK(n != nullptr, "Executor::execute: null node");
 
-  n->out_.allocate();
-
   switch (n->op_) {
     case Op::NONE:
+      n->out_.allocate();
+      break;
+    case Op::COPY:
+      if (!n->src1_.has_storage()) {
+        KILN_ERROR("Executor::execute: COPY source has no storage; ",
+            "its producer is missing or never ran");
+      }
+      n->out_.copy_(n->src1_);
       break;
     case Op::ADD:
     case Op::SUBTRACT:

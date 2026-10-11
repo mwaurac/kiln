@@ -23,6 +23,22 @@ Storage::Storage(void *data,
   KILN_CHECK(borrowed_ != nullptr || nbytes() == 0, "Storage: borrowed data pointer is null");
 }
 
+Storage::Storage(const void *data,
+    std::size_t numel,
+    DType dtype,
+    Device device,
+    std::shared_ptr<void> owner)
+    : borrowed_(data),
+      owner_(std::move(owner)),
+      readonly_(true),
+      numel_(numel),
+      dtype_(dtype),
+      device_(device) {
+  KILN_CHECK(device == Device::CPU, "Storage: only CPU device is implemented");
+  KILN_CHECK(owner_ != nullptr, "Storage: borrowed memory requires a lifetime owner");
+  KILN_CHECK(borrowed_ != nullptr || nbytes() == 0, "Storage: borrowed data pointer is null");
+}
+
 std::size_t Storage::nbytes() const {
   return kiln::nbytes(numel_, dtype_);
 }
@@ -31,7 +47,13 @@ const void *Storage::data() const {
   return buf_ ? buf_->base() : borrowed_;
 }
 void *Storage::data() {
-  return buf_ ? buf_->base() : borrowed_;
+  if (readonly_) {
+    KILN_ERROR("Storage::data: storage is read-only borrowed memory");
+  }
+  if (buf_) {
+    return buf_->base();
+  }
+  return const_cast<void *>(borrowed_);
 }
 Device Storage::device() const {
   return device_;
@@ -39,6 +61,25 @@ Device Storage::device() const {
 
 DType Storage::dtype() const {
   return dtype_;
+}
+
+Storage::Kind Storage::kind() const {
+  if (buf_) {
+    return Kind::Owned;
+  }
+  return Kind::Borrowed;
+}
+
+bool Storage::is_owned() const {
+  return buf_ != nullptr;
+}
+
+bool Storage::is_borrowed() const {
+  return buf_ == nullptr && owner_ != nullptr;
+}
+
+bool Storage::is_readonly() const {
+  return readonly_;
 }
 
 }  // namespace kiln

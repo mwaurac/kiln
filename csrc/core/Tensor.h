@@ -42,8 +42,16 @@ class Tensor {
       DType dtype,
       Device device,
       std::shared_ptr<void> owner);
+  static Tensor from_blob(const void *data,
+      const Shape &shape,
+      const Strides &strides,
+      DType dtype,
+      Device device,
+      std::shared_ptr<void> owner);
 
   bool has_storage() const;
+  bool is_borrowed() const;
+  bool is_readonly() const;
   void allocate();
 
   void *data();
@@ -57,6 +65,8 @@ class Tensor {
   const std::uint16_t *data_bf16() const;
   block_q8_0 *data_q8_0();
   const block_q8_0 *data_q8_0() const;
+
+  Tensor copy_(const Tensor &src);
 
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;

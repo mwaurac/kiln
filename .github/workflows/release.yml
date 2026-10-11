@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.resolve-target.outputs.target }}
-      url: ${{ needs.resolve-target.outputs.target == 'pypi' && 'https://pypi.org/p/spindle-rt' || 'https://test.pypi.org/p/spindle-rt' }}
+      url: ${{ needs.resolve-target.outputs.target == 'pypi' && 'https://pypi.org/p/kiln-rt' || 'https://test.pypi.org/p/kiln-rt' }}
     permissions:
       id-token: write # required for Trusted Publishing
       contents: read
@@ -113,4 +113,5 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           attestations: false
+          skip-existing: true
           verbose: true

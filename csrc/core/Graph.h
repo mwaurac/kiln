@@ -33,6 +33,7 @@ struct Node {
 class Graph {
  public:
   Node *add_node(std::string name, Op op, Tensor src1, Tensor src2, Tensor out);
+  Node *add_node(std::string name, Op op, Tensor src, Tensor out);
   Node *find(const Tensor &t) const;
 
   std::size_t size() const {

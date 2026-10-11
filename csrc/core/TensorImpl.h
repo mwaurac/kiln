@@ -17,6 +17,8 @@ class Storage;
 class TensorImpl {
  private:
   std::shared_ptr<Storage> storage_;
+  // Metadata-view parent (set by view/reshape/transpose)
+  std::shared_ptr<TensorImpl> base_;
   std::int64_t offset_;
 
   Layout layout_;
@@ -37,12 +39,16 @@ class TensorImpl {
       DType dtype,
       Device device);
 
-  bool has_storage() const {
-    return storage_ != nullptr;
-  }
+  bool has_storage() const;
   void allocate();
 
-  const std::shared_ptr<Storage> &storage() const;
+  std::shared_ptr<Storage> storage() const;
+  const std::shared_ptr<TensorImpl> &base() const {
+    return base_;
+  }
+  void set_base(std::shared_ptr<TensorImpl> base) {
+    base_ = std::move(base);
+  }
   const std::int64_t offset() const;
   DType dtype() const;
   Device device() const;
@@ -55,6 +61,8 @@ class TensorImpl {
   std::size_t nbytes() const;
   std::size_t itemsize() const;
   bool is_contiguous() const;
+  bool is_borrowed() const;
+  bool is_readonly() const;
 
   void *data();
   const void *data() const;
