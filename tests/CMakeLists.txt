@@ -4,6 +4,7 @@ set(KILN_TEST_SOURCES
   cpp/test_storage.cpp
   cpp/test_tensor.cpp
   cpp/test_graph.cpp
+  cpp/test_ops.cpp
 )
 
 add_executable(kiln_tests ${KILN_TEST_SOURCES})

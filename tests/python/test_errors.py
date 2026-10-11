@@ -181,3 +181,53 @@ def test_copy_rejects_readonly_destination():
     dst = kiln.from_buffer(b"\x00" * 8, [2])
     with pytest.raises(RuntimeError, match="read-only"):
         dst.copy_(kiln.ones([2]))
+
+
+# --- lazy op builders ------------------------------------------------------
+
+
+def test_add_mul_reject_shape_mismatch():
+    with pytest.raises(RuntimeError, match="shape mismatch"):
+        kiln.zeros([2, 3]) + kiln.zeros([3, 2])
+    with pytest.raises(RuntimeError, match="shape mismatch"):
+        kiln.mul(kiln.zeros([6]), kiln.zeros([2, 3]))
+
+
+def test_add_rejects_dtype_mismatch():
+    with pytest.raises(RuntimeError, match="dtype mismatch"):
+        kiln.add(kiln.zeros([2]), kiln.zeros([2], dtype=kiln.f16))
+
+
+def test_ops_reject_quantized_dtype():
+    q = kiln.zeros([32], dtype=kiln.q8_0)
+    with pytest.raises(RuntimeError, match="quantized"):
+        q + q
+    with pytest.raises(RuntimeError, match="quantized"):
+        kiln.relu(q)
+
+
+def test_matmul_rejects_rank_and_inner_mismatch():
+    with pytest.raises(RuntimeError, match="only 2D"):
+        kiln.zeros([2, 3, 4]) @ kiln.zeros([4, 5])
+    with pytest.raises(RuntimeError, match="inner dimensions"):
+        kiln.zeros([4, 8]) @ kiln.zeros([7, 16])
+
+
+def test_softmax_rejects_bad_axis():
+    t = kiln.zeros([2, 3])
+    with pytest.raises(RuntimeError, match="out of range"):
+        kiln.softmax(t, axis=2)
+    with pytest.raises(RuntimeError, match="out of range"):
+        kiln.softmax(t, axis=-3)
+    with pytest.raises(RuntimeError, match="rank"):
+        kiln.softmax(kiln.zeros([]))
+
+
+def test_ops_reject_mixed_graphs():
+    g1, g2 = kiln.Graph(), kiln.Graph()
+    with g1:
+        y1 = kiln.relu(kiln.zeros([2]))
+    with g2:
+        with pytest.raises(RuntimeError, match="different capture graphs"):
+            y1 + kiln.zeros([2])
+    assert len(g2) == 0  # failed builds record nothing

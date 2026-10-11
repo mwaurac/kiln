@@ -2,7 +2,7 @@ import kiln
 
 
 def test_version():
-    assert kiln.__version__ == "0.1.0"
+    assert kiln.__version__ == "0.1.1"
 
 
 def test_top_level_exports():
@@ -26,9 +26,16 @@ def test_top_level_exports():
         assert hasattr(kiln, name), name
     assert set(kiln.__all__) >= {
         "Tensor",
+        "Graph",
         "execute",
         "from_numpy",
         "from_buffer",
+        "add",
+        "mul",
+        "matmul",
+        "relu",
+        "silu",
+        "softmax",
     }
 
 

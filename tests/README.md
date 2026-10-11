@@ -12,6 +12,8 @@ module exists.
   dtypes, mmap lifetime).
 - `test_errors.py` — every `RuntimeError` reachable through the Python API,
   grouped by call.
+- `test_ops.py` — lazy builders (shapes, laziness, capture). No execution
+  until reference kernels land.
 - `test_module.py` — package surface (version, exports, aliases).
 
 `tests/cpp/` proves core logic, including paths Python cannot construct yet
@@ -21,6 +23,7 @@ module exists.
 - `test_tensor.cpp` — metadata, view chains, `copy_`, `contiguous`, accessors.
 - `test_graph.cpp` — nodes, producer lookup through views, scheduling,
   `COPY` execution, deferred materialization.
+- `test_ops.cpp` — builder validation, capture stack, graph mixing rules.
 
 ## Split rule
 
