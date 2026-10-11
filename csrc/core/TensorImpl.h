@@ -13,12 +13,14 @@
 namespace kiln {
 
 class Storage;
+class Graph;
 
 class TensorImpl {
  private:
   std::shared_ptr<Storage> storage_;
   // Metadata-view parent (set by view/reshape/transpose)
   std::shared_ptr<TensorImpl> base_;
+  std::shared_ptr<Graph> graph_;
   std::int64_t offset_;
 
   Layout layout_;
@@ -48,6 +50,12 @@ class TensorImpl {
   }
   void set_base(std::shared_ptr<TensorImpl> base) {
     base_ = std::move(base);
+  }
+  const std::shared_ptr<Graph> &graph() const {
+    return graph_;
+  }
+  void set_graph(std::shared_ptr<Graph> graph) {
+    graph_ = std::move(graph);
   }
   const std::int64_t offset() const;
   DType dtype() const;

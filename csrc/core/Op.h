@@ -14,6 +14,8 @@ enum Op : std::uint8_t {
   RELU,
   SOFTMAX,
   COPY,
+  MUL,
+  SILU,
   OPS_COUNT,
 };
 
@@ -25,7 +27,14 @@ static const char *OP_NAME[OPS_COUNT] = {
     "RELU",
     "SOFTMAX",
     "COPY",
+    "MUL",
+    "SILU",
 };
 
 Tensor add(const Tensor &a, const Tensor &b);
+Tensor mul(const Tensor &a, const Tensor &b);
+Tensor matmul(const Tensor &a, const Tensor &b);
+Tensor relu(const Tensor &x);
+Tensor silu(const Tensor &x);
+Tensor softmax(const Tensor &x, int64_t axis = -1);
 }  // namespace kiln

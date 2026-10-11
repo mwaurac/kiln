@@ -1,6 +1,7 @@
 #include <common/Error.h>
 #include <core/Executor.h>
 
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -51,7 +52,9 @@ void Executor::execute(Node *n) {
     case Op::ADD:
     case Op::SUBTRACT:
     case Op::MATMUL:
+    case Op::MUL:
     case Op::RELU:
+    case Op::SILU:
     case Op::SOFTMAX:
       KILN_ERROR("Executor::execute: op not implemented: ", OP_NAME[n->op_]);
     default:
@@ -66,8 +69,9 @@ void Executor::run() {
 }
 
 void execute(const Tensor &output) {
+  std::shared_ptr<Graph> owner = output.impl()->graph();
   Executor ex;
-  ex.schedule(default_graph(), output);
+  ex.schedule(owner ? *owner : default_graph(), output);
   ex.run();
 }
 }  // namespace kiln

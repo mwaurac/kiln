@@ -2,7 +2,9 @@
 #include <core/Device.h>
 #include <core/Dtype.h>
 #include <core/Executor.h>
+#include <core/Graph.h>
 #include <core/Layout.h>
+#include <core/Op.h>
 #include <core/Tensor.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -48,7 +50,7 @@ PYBIND11_MODULE(_kiln, m) {
 #ifdef KILN_VERSION
   m.attr("__version__") = KILN_VERSION;
 #else
-  m.attr("__version__") = "0.1.0";
+  m.attr("__version__") = "0.1.1";
 #endif
 
   py::enum_<kiln::DType>(m, "DType")
@@ -62,6 +64,19 @@ PYBIND11_MODULE(_kiln, m) {
       .value("CPU", kiln::Device::CPU)
       .value("CUDA", kiln::Device::CUDA)
       .export_values();
+
+  py::class_<kiln::Graph, std::shared_ptr<kiln::Graph>>(m, "Graph")
+      .def(py::init<>(), "Independent capture graph. Use `with graph:` to record ops into it.")
+      .def("size", &kiln::Graph::size, "Number of recorded nodes.")
+      .def("__len__", &kiln::Graph::size)
+      .def("__enter__",
+          [](std::shared_ptr<kiln::Graph> self) {
+            self->begin_capture();
+            return self;
+          })
+      .def("__exit__", [](std::shared_ptr<kiln::Graph> self, py::object, py::object, py::object) {
+        self->end_capture();
+      });
 
   m.attr("float32") = kiln::DType::F32;
   m.attr("f16") = kiln::DType::F16;
@@ -293,6 +308,18 @@ PYBIND11_MODULE(_kiln, m) {
           py::arg("dim1"))
       .def("contiguous", &kiln::Tensor::contiguous)
       .def(
+          "__add__",
+          [](const kiln::Tensor &a, const kiln::Tensor &b) { return kiln::add(a, b); },
+          py::is_operator())
+      .def(
+          "__mul__",
+          [](const kiln::Tensor &a, const kiln::Tensor &b) { return kiln::mul(a, b); },
+          py::is_operator())
+      .def(
+          "__matmul__",
+          [](const kiln::Tensor &a, const kiln::Tensor &b) { return kiln::matmul(a, b); },
+          py::is_operator())
+      .def(
           "copy_",
           [](kiln::Tensor &t, const kiln::Tensor &src) { return t.copy_(src); },
           py::arg("src"),
@@ -302,4 +329,14 @@ PYBIND11_MODULE(_kiln, m) {
       [](const kiln::Tensor &output) { kiln::execute(output); },
       py::arg("output"),
       "Run the graph producing output (no-op if it has no producer).");
+  m.def("add", &kiln::add, py::arg("a"), py::arg("b"), "Lazy elementwise add (same shape).");
+  m.def("mul", &kiln::mul, py::arg("a"), py::arg("b"), "Lazy elementwise mul (same shape).");
+  m.def("matmul", &kiln::matmul, py::arg("a"), py::arg("b"), "Lazy 2D matmul.");
+  m.def("relu", &kiln::relu, py::arg("x"), "Lazy ReLU.");
+  m.def("silu", &kiln::silu, py::arg("x"), "Lazy SiLU.");
+  m.def("softmax",
+      &kiln::softmax,
+      py::arg("x"),
+      py::arg("axis") = int64_t{-1},
+      "Lazy softmax along axis.");
 }
