@@ -16,20 +16,6 @@
 #include <vector>
 
 namespace kiln {
-namespace {
-std::string shape_str(const Shape &shape) {
-  std::string s = "[";
-  for (std::size_t i = 0; i < shape.size(); ++i) {
-    if (i > 0) {
-      s += ", ";
-    }
-    s += std::to_string(shape[i]);
-  }
-  s += "]";
-  return s;
-}
-}  // namespace
-
 Shape Tensor::shape() const {
   return impl_->shape();
 }
@@ -210,9 +196,9 @@ Tensor Tensor::copy_(const Tensor &src) {
       dtype_name(src.dtype()));
   KILN_CHECK(shape() == src.shape(),
       "copy_: shape mismatch: destination is ",
-      shape_str(shape()),
+      shape_string(shape()),
       ", source is ",
-      shape_str(src.shape()));
+      shape_string(src.shape()));
   if (impl_.get() == src.impl_.get()) {
     return *this;
   }
@@ -301,8 +287,7 @@ Tensor Tensor::contiguous() const {
 }
 
 std::string Tensor::print_tensor() const {
-  // TODO: move shape_str into layour
-  return std::string("kiln.Tensor(shape=") + shape_str(shape()) + ", dtype=" + dtype_name(dtype()) +
+  return std::string("kiln.Tensor(shape=") + shape_string(shape()) + ", dtype=" + dtype_name(dtype()) +
          ", device=" + device_name(device()) + ")";
 }
 
