@@ -158,15 +158,27 @@ PYBIND11_MODULE(_kiln, m) {
       },
       py::arg("array"),
       py::arg("copy") = true,
-      "Build a float32 Kiln tensor from a NumPy array.");
+      "Float32 array -> tensor. copy=True (default): owned copy. copy=False: borrow (must be "
+      "writeable).");
 
+  // No copy: tensor views the buffer at byte_offset, keeps it alive.
   m.def(
       "from_buffer",
       [](py::buffer buf,
           std::vector<std::uint64_t> shape,
           kiln::DType dtype,
-          std::optional<std::vector<std::uint64_t>> strides) {
+          std::optional<std::vector<std::uint64_t>> strides,
+          std::int64_t byte_offset) {
         const py::buffer_info info = buf.request();
+        KILN_CHECK(byte_offset >= 0, "from_buffer: byte_offset must be non-negative");
+        const std::size_t align =
+            kiln::dtype_is_quantized(dtype) ? kiln::dtype_size(dtype) : kiln::dtype_itemsize(dtype);
+        KILN_CHECK(static_cast<std::size_t>(byte_offset) % align == 0,
+            "from_buffer: byte_offset (",
+            byte_offset,
+            ") is not a multiple of the dtype granularity (",
+            align,
+            " bytes)");
         kiln::Shape kshape(shape.begin(), shape.end());
         kiln::Strides kstrides;
         if (strides) {
@@ -180,18 +192,26 @@ PYBIND11_MODULE(_kiln, m) {
         const std::size_t need = kiln::nbytes(numel, dtype);
         const std::size_t have =
             static_cast<std::size_t>(info.size) * static_cast<std::size_t>(info.itemsize);
-        if (have < need) {
-          KILN_ERROR("from_buffer: buffer holds ", have, " bytes but shape/dtype need ", need);
+        const std::size_t off = static_cast<std::size_t>(byte_offset);
+        if (off + need > have) {
+          KILN_ERROR("from_buffer: buffer holds ",
+              have,
+              " bytes but byte_offset (",
+              off,
+              ") + shape/dtype need (",
+              need,
+              ") exceeds it");
         }
+        auto *ptr = static_cast<char *>(info.ptr) + off;
         if (info.readonly) {
-          return kiln::Tensor::from_blob(static_cast<const void *>(info.ptr),
+          return kiln::Tensor::from_blob(static_cast<const void *>(ptr),
               kshape,
               kstrides,
               dtype,
               kiln::Device::CPU,
               keep_alive(py::object(buf)));
         }
-        return kiln::Tensor::from_blob(info.ptr,
+        return kiln::Tensor::from_blob(static_cast<void *>(ptr),
             kshape,
             kstrides,
             dtype,
@@ -202,7 +222,8 @@ PYBIND11_MODULE(_kiln, m) {
       py::arg("shape"),
       py::arg("dtype") = kiln::DType::F32,
       py::arg("strides") = std::optional<std::vector<std::uint64_t>>{},
-      "Wrap a writeable buffer-protocol object as a Kiln tensor without copying.");
+      py::arg("byte_offset") = std::int64_t{0},
+      "Borrow buffer memory as a tensor (no copy). Read-only buffer -> read-only tensor.");
 
   py::class_<kiln::Tensor>(m, "Tensor")
       .def(py::init([](std::vector<uint64_t> shape, kiln::DType dtype, kiln::Device device) {
@@ -261,7 +282,7 @@ PYBIND11_MODULE(_kiln, m) {
             }
             return out;
           },
-          "Copy this tensor to a NumPy array (float32 only).\n")
+          "Copy tensor to a NumPy array (float32 only).")
 
       .def("reshape", &kiln::Tensor::reshape, py::arg("dims"))
       .def("view", &kiln::Tensor::view, py::arg("dims"))
@@ -270,10 +291,15 @@ PYBIND11_MODULE(_kiln, m) {
               &kiln::Tensor::transpose),
           py::arg("dim0"),
           py::arg("dim1"))
-      .def("contiguous", &kiln::Tensor::contiguous);
+      .def("contiguous", &kiln::Tensor::contiguous)
+      .def(
+          "copy_",
+          [](kiln::Tensor &t, const kiln::Tensor &src) { return t.copy_(src); },
+          py::arg("src"),
+          "Copy src into self (same shape/dtype required). Returns self.");
   m.def(
       "execute",
       [](const kiln::Tensor &output) { kiln::execute(output); },
       py::arg("output"),
-      "Execute the graph producing `output`. No-op when `output` has no producer.");
+      "Run the graph producing output (no-op if it has no producer).");
 }

@@ -13,6 +13,7 @@ enum Op : std::uint8_t {
   MATMUL,
   RELU,
   SOFTMAX,
+  COPY,
   OPS_COUNT,
 };
 
@@ -23,6 +24,7 @@ static const char *OP_NAME[OPS_COUNT] = {
     "MATMUL",
     "RELU",
     "SOFTMAX",
+    "COPY",
 };
 
 Tensor add(const Tensor &a, const Tensor &b);

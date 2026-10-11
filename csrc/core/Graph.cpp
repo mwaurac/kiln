@@ -22,13 +22,21 @@ Node *Graph::add_node(std::string name, Op op, Tensor src1, Tensor src2, Tensor 
   return ptr;
 }
 
+Node *Graph::add_node(std::string name, Op op, Tensor src, Tensor out) {
+  static Tensor nil = Tensor::lazy({0});
+  return add_node(std::move(name), op, std::move(src), nil, std::move(out));
+}
+
 Node *Graph::find(const Tensor &t) const {
-  const auto &impl = t.impl();
-  if (!impl) {
-    return nullptr;
+  auto impl = t.impl();
+  while (impl) {
+    auto it = producer_.find(impl.get());
+    if (it != producer_.end()) {
+      return it->second;
+    }
+    impl = impl->base();
   }
-  auto it = producer_.find(impl.get());
-  return it == producer_.end() ? nullptr : it->second;
+  return nullptr;
 }
 
 Graph &default_graph() {

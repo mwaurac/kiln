@@ -66,6 +66,8 @@ class Tensor {
   block_q8_0 *data_q8_0();
   const block_q8_0 *data_q8_0() const;
 
+  Tensor copy_(const Tensor &src);
+
   Tensor reshape(const std::vector<int64_t> &dims) const;
   Tensor view(const std::vector<int64_t> &dims) const;
   Tensor transpose() const;
