@@ -1,6 +1,6 @@
 [project]
 name = "kiln-rt"
-version = "0.1.0"
+version = "0.1.1"
 description = "Kiln"
 readme = "README.md"
 license = { text = "GPL-2.0" }

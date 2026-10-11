@@ -48,7 +48,7 @@ PYBIND11_MODULE(_kiln, m) {
 #ifdef KILN_VERSION
   m.attr("__version__") = KILN_VERSION;
 #else
-  m.attr("__version__") = "0.1.0";
+  m.attr("__version__") = "0.1.1";
 #endif
 
   py::enum_<kiln::DType>(m, "DType")

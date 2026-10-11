@@ -2,7 +2,7 @@ import kiln
 
 
 def test_version():
-    assert kiln.__version__ == "0.1.0"
+    assert kiln.__version__ == "0.1.1"
 
 
 def test_top_level_exports():
