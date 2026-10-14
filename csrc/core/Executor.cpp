@@ -1,5 +1,7 @@
 #include <common/Error.h>
+#include <core/Dtype.h>
 #include <core/Executor.h>
+#include <core/Kernels.h>
 
 #include <memory>
 #include <string>
@@ -50,12 +52,30 @@ void Executor::execute(Node *n) {
       n->out_.copy_(n->src1_);
       break;
     case Op::ADD:
-    case Op::SUBTRACT:
-    case Op::MATMUL:
+      n->out_.allocate();
+      kernels::add_f32(n->src1_, n->src2_, n->out_);
+      break;
     case Op::MUL:
+      n->out_.allocate();
+      kernels::mul_f32(n->src1_, n->src2_, n->out_);
+      break;
+    case Op::MATMUL:
+      n->out_.allocate();
+      kernels::matmul_f32(n->src1_, n->src2_, n->out_);
+      break;
     case Op::RELU:
+      n->out_.allocate();
+      kernels::relu_f32(n->src1_, n->out_);
+      break;
     case Op::SILU:
+      n->out_.allocate();
+      kernels::silu_f32(n->src1_, n->out_);
+      break;
     case Op::SOFTMAX:
+      n->out_.allocate();
+      kernels::softmax_f32(n->src1_, n->out_, n->axis_);
+      break;
+    case Op::SUBTRACT:
       KILN_ERROR("Executor::execute: op not implemented: ", OP_NAME[n->op_]);
     default:
       KILN_ERROR("Executor::execute: unknown op");

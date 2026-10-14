@@ -282,13 +282,14 @@ Tensor Tensor::contiguous() const {
   }
 
   Tensor out = Tensor::lazy(shape(), dtype(), device());
-  default_graph().add_node("contiguous", Op::COPY, *this, out);
+  std::shared_ptr<Graph> graph = Graph::resolve_output_graph({this});
+  (graph ? *graph : default_graph()).add_node("contiguous", Op::COPY, *this, out);
   return out;
 }
 
 std::string Tensor::print_tensor() const {
-  return std::string("kiln.Tensor(shape=") + shape_string(shape()) + ", dtype=" + dtype_name(dtype()) +
-         ", device=" + device_name(device()) + ")";
+  return std::string("kiln.Tensor(shape=") + shape_string(shape()) +
+         ", dtype=" + dtype_name(dtype()) + ", device=" + device_name(device()) + ")";
 }
 
 }  // namespace kiln

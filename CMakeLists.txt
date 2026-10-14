@@ -22,6 +22,7 @@ csrc/core/TensorImpl.cpp
 csrc/core/Tensor.cpp
 csrc/core/Graph.cpp
 csrc/core/Op.cpp
+csrc/core/Kernels.cpp
 csrc/core/Executor.cpp
 )
 

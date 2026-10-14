@@ -11,14 +11,32 @@
 
 namespace kiln {
 namespace {
-void require_same_shape(const char *op, const Tensor &a, const Tensor &b) {
-  KILN_CHECK(a.shape() == b.shape(),
-      op,
+void require_add_shapes(const Tensor &a, const Tensor &b) {
+  if (a.shape() == b.shape()) {
+    return;
+  }
+  const Shape &sa = a.shape();
+  const Shape &sb = b.shape();
+  const bool a_bias = sa.size() == 2 && sb.size() == 1 && sb[0] == sa[1];
+  const bool b_bias = sb.size() == 2 && sa.size() == 1 && sa[0] == sb[1];
+  KILN_CHECK(a_bias || b_bias,
+      "add",
       ": shape mismatch: ",
-      shape_string(a.shape()),
+      shape_string(sa),
       " vs ",
-      shape_string(b.shape()),
-      " (broadcasting is not supported yet)");
+      shape_string(sb),
+      " (only identical shapes or [M, N] + [N] row-bias broadcast are supported)");
+}
+
+Shape add_out_shape(const Tensor &a, const Tensor &b) {
+  if (a.shape() == b.shape()) {
+    return a.shape();
+  }
+  // One side is [M, N], the other is [N].
+  if (a.shape().size() == 2) {
+    return a.shape();
+  }
+  return b.shape();
 }
 
 void require_same_dtype(const char *op, const Tensor &a, const Tensor &b) {
@@ -71,15 +89,21 @@ Tensor lazy_out(const Shape &shape,
 }  // namespace
 
 Tensor add(const Tensor &a, const Tensor &b) {
-  require_same_shape("add", a, b);
+  require_add_shapes(a, b);
   require_same_dtype("add", a, b);
   require_same_device("add", a, b);
   require_compute_dtype("add", a.dtype());
-  return lazy_out(a.shape(), a.dtype(), a.device(), {&a, &b}, "add", Op::ADD, &b);
+  return lazy_out(add_out_shape(a, b), a.dtype(), a.device(), {&a, &b}, "add", Op::ADD, &b);
 }
 
 Tensor mul(const Tensor &a, const Tensor &b) {
-  require_same_shape("mul", a, b);
+  KILN_CHECK(a.shape() == b.shape(),
+      "mul",
+      ": shape mismatch: ",
+      shape_string(a.shape()),
+      " vs ",
+      shape_string(b.shape()),
+      " (broadcasting is not supported for mul)");
   require_same_dtype("mul", a, b);
   require_same_device("mul", a, b);
   require_compute_dtype("mul", a.dtype());
